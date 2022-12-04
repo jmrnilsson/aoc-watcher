@@ -91,8 +91,6 @@ async function fetchPuzzleInput(context, year, day, puzzleFile, puzzleFolder) {
             const content = value.concat("\n");  // New line is stripped from HTML tag attribute.
             logger.info(`XHR done. Content type: ${type} Content length: ${content.length}`);
             const folder = Mustache.render(puzzleFolder, {year: year, day: zfill(day, 2)});
-            // const folder = path.join(__dirname, '..', `aoc/year_${year}/day_${zfill(day, 2)}`);
-            // const fileName = "puzzle.txt";
             await writeFilePromise(folder, puzzleFile, content);
             return true
         }
@@ -177,7 +175,6 @@ class Responder {
             }
         }   
     }
-
 }
 
 async function start(argv) {
@@ -200,8 +197,8 @@ async function start(argv) {
     await visitDay({Page, Runtime, Network}, year, day);
     await fetchPuzzleInput({Page, Runtime, Network}, year, day, puzzleFile, puzzleFolder);
     
-    // const responder1 = new Responder({Page, Runtime, Network}, "-json1", year, day, execPath, module);
-    // await responder1.start();
+    const responder1 = new Responder({Page, Runtime, Network}, "-json1", year, day, execPath, module);
+    await responder1.start();
     const responder2 = new Responder({Page, Runtime, Network}, "-json2", year, day, execPath, module);
     await responder2.start();
 
