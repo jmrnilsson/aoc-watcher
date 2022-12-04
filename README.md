@@ -1,4 +1,4 @@
-# AOC Watcher
+# 🎄 AOC Watcher 🎄 
 
 Allows for an automated browser experience during `Advent of Code` submittions. Verified on Windows with [Firefox](https://www.mozilla.org/), [Brave](https://brave.com/) with interop against [Python](https://www.python.org/downloads/) and the latest [NodeJS LTS](https://nodejs.org/en/download/) only. If you prefer something else there are serveral [other tools](https://github.com/scarvalhojr/aoc-cli) that could be worth a try. Built with [Chrome Remote Interface](https://www.npmjs.com/package/chrome-remote-interface) and Javascript.
 
