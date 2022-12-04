@@ -22,8 +22,7 @@ env-file.
 > **Note:** Days will be padded with single digit zero fill (for now).
 
 ```pwsh
-# Kindly note that this is not your typical environment variable but a template string
-# using Mustasche.
+# Kindly take note of employed Mustasche template string.
 $env:AOCW_PUZZLE_FILE = 'puzzle.txt'
 $env:AOCW_PUZZLE_FOLDER = 'C:\\development\\aoc\\year_{{year}}\\day_{{day}}\\'
 $env:AOCW_MODULE = 'C:\\development\\aoc\\year_{{year}}\\day_{{day}}\\solve.py'
