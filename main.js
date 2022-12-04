@@ -200,8 +200,8 @@ async function start(argv) {
     await visitDay({Page, Runtime, Network}, year, day);
     await fetchPuzzleInput({Page, Runtime, Network}, year, day, puzzleFile, puzzleFolder);
     
-    // const responder1 = new Responder({Page, Runtime, Network}, "-json1", year, day, execPath, module);
-    // await responder1.start();
+    const responder1 = new Responder({Page, Runtime, Network}, "-json1", year, day, execPath, module);
+    await responder1.start();
     const responder2 = new Responder({Page, Runtime, Network}, "-json2", year, day, execPath, module);
     await responder2.start();
 
