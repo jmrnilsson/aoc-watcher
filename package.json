@@ -1,0 +1,18 @@
+{
+  "name": "solvewatcher",
+  "version": "0.0.1",
+  "description": "A puzzle input browser scraper and solution watcher",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "test"
+  },
+  "author": "Martin Nilsson",
+  "license": "MIT",
+  "dependencies": {
+    "chrome-remote-interface": "^0.31.3",
+    "moment": "^2.29.4",
+    "mustache": "^4.2.0",
+    "winston": "^3.8.2"
+  }
+}
