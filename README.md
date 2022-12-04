@@ -50,4 +50,4 @@ The watcher does interop via standard output from a user configured process. If 
 ## Additional notes
 Advent of Code is a puzzle oriented calendar by [Eric Wastl](https://twitter.com/ericwastl) and other contributors. Please consider [supporting their work](https://adventofcode.com/2022/support).
 
-This repository is provided under [MIT](LICENSE) and is not directly affillated with Advent of Code, Firefox, Brave, Safari, Chrome, NodeJS or any of libraries referenced.
+This repository is provided under [MIT](LICENSE) and is not directly affiliated with Advent of Code, Firefox, Brave, Safari, Chrome, NodeJS or any of libraries referenced.
