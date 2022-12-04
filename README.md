@@ -10,7 +10,7 @@ Allows for an automated browser experience during `Advent of Code` subsmissions.
 The browser will have to authenticate at some point. Might just do that in same browser that will run the debugger.
 
 ## Setup
-Use `npm -i` with the latest [NodeJS LTS](https://nodejs.org/en/download/).
+Use `npm i` with the latest [NodeJS LTS](https://nodejs.org/en/download/).
 ## Running
 
 Start a browser with Chrome DevTools Protocol enabled but without headless option off (preferably). Or customize and run `safari.sh`,
