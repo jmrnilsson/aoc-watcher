@@ -4,26 +4,25 @@ Allows for an automated browser experience during `Advent of Code` subsmissions.
 
 - Dowloads the puzzle input.
 - Polls a process and reads stardard output or standard error expecting JSON.
-- Does a challange against any previous ones (if any).
-- Submits and continues to part 2 if ok.
+- Does a challange against any previous answer submissions (if any).
+- Submits and continues to part 2 if OK.
 
-You will have to sign authenticate at some point. Might just do that in same browser that will run the debugger.
+The browser will have to authenticate at some point. Might just do that in same browser that will run the debugger.
 
 ## Setup
 Use `npm -i` with the latest [NodeJS LTS](https://nodejs.org/en/download/).
 ## Running
 
-Start a browser with Chrome DevTools Protocol enabled but without headless option off (preferbly). Or customize and run `safari.sh`,
+Start a browser with Chrome DevTools Protocol enabled but without headless option off (preferably). Or customize and run `safari.sh`,
 `firefox.ps1` or `./brave.ps1` to your needs. 
 
-You'll have to setup some enviroment variables. As this was intended for Python interoperability via processes there 
-are two variables to set. Here an example (on Windows) but you might just want to change the script used or use an
+Some enviroment variables needs to be set. Here an example (on Windows) but you might just want to change the script used or use an
 env-file.
 
 > **Note:** Days will be padded with single digit zero fill (for now).
 
 ```pwsh
-# Remove zfill days aren't padded. Kindly note that this is not your typical environment variable but template string
+# Kindly note that this is not your typical environment variable but a template string
 # using Mustasche.
 $env:AOCW_PUZZLE_FILE = 'puzzle.txt'
 $env:AOCW_PUZZLE_FOLDER = 'C:\\development\\aoc\\year_{{year}}\\day_{{day}}\\'
