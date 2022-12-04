@@ -5,7 +5,7 @@ Allows for an automated browser experience during `Advent of Code` subsmissions.
 - Dowloads the puzzle input.
 - Polls a process and reads stardard output or standard error expecting JSON.
 - Does a challange against any previous answer submissions (if any).
-- Submits and continues to part 2 if OK.
+- Submits and continues to part 2 and repeats.
 
 The browser will have to authenticate at some point. Might just do that in same browser that will run the debugger.
 
