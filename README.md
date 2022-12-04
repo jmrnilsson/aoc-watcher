@@ -2,7 +2,7 @@
 
 Allows for an automated browser experience during `Advent of Code` subsmissions. Verified on Windows with [Firefox](https://www.mozilla.org/), [Brave](https://brave.com/) with interop against [Python](https://www.python.org/downloads/) and the latest [NodeJS LTS](https://nodejs.org/en/download/) only. If you prefer something else there are serveral [other tools](https://github.com/scarvalhojr/aoc-cli) that could be worth a try. Built with [Chrome Remote Interface](https://www.npmjs.com/package/chrome-remote-interface) and Javascript.
 
-- Dowloads the puzzle input.
+- Downloads the puzzle input.
 - Polls a process and reads stardard output or standard error expecting JSON.
 - Does a challange against any previous answer submissions (if any).
 - Submits and continues to part 2 and repeats.
@@ -49,4 +49,4 @@ The watcher does interop via standard output from a user configured process. If 
 ## Additional notes
 Advent of Code is a puzzle oriented calendar by [Eric Wastl](https://twitter.com/ericwastl) and other contributors. Please consider [supporting their work](https://adventofcode.com/2022/support).
 
-This repository is provided under [MIT](LICENSE) and is not directly affiliated with Advent of Code, Firefox, Brave, Safari or Chrome. Any references libraries are licensed separately.
+This repository is provided under [MIT](LICENSE) and isn't directly affiliated with Advent of Code, Firefox, Brave, Safari or Chrome. Any referenced libraries are licensed separately.
