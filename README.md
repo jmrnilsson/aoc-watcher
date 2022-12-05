@@ -1,6 +1,15 @@
 # 🎄 AoC Watcher 🎄 
 
-Allows for an automated browser experience during `Advent of Code` subsmissions. Verified on Windows with [Firefox](https://www.mozilla.org/), [Brave](https://brave.com/) with interop against [Python](https://www.python.org/downloads/) and the latest [NodeJS LTS](https://nodejs.org/en/download/) only. If you prefer something else there are serveral [other tools](https://github.com/scarvalhojr/aoc-cli) that could be worth a try. Built with [Chrome Remote Interface](https://www.npmjs.com/package/chrome-remote-interface) and Javascript.
+Allows for an automated browser experience during `Advent of Code` subsmissions. Verified only with [Python](https://www.python.org/downloads/) interop and the latest [NodeJS LTS](https://nodejs.org/en/download/). If you prefer something else there are serveral [other tools](https://github.com/scarvalhojr/aoc-cli) that could be worth a try. Built with [Chrome Remote Interface](https://www.npmjs.com/package/chrome-remote-interface) and Javascript.
+
+The following configurations have been verified.
+
+| OS  | Browser | Verified |
+|------|------|------|
+| Windows  | Firefox | &#x2611; 2022-12-04 |
+| Windows  | Brave | &#x2611; 2022-12-04 |
+| MacOS  | Firefox | &#x2612; 2022-12-05: Firefox doesn't allow for Javascript injection. |
+| MacOS  | Brave | &#x2612; 2022-12-05: Permission required for disk write but `node-mac-permissions` don't build. |
 
 - Downloads the puzzle input.
 - Polls a process and reads stardard output or standard error expecting JSON.
