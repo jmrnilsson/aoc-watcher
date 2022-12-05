@@ -163,7 +163,7 @@ class Responder {
                 
                 if (ok == true && !this.seen.has(puzzle) && puzzle > this.min && puzzle < this.max){
                     const waitTime = moment.utc().diff(this.faultAt, 'seconds', true);
-                    const sleep = Math.max(Math.min(respondMinimumWait - waitTime, respondMinimumWait * 0.1, 0));
+                    const sleep = Math.max(Math.min(respondMinimumWait - waitTime, respondMinimumWait * 0.1), 0);
                     logger.warn(`Will commit answer for ${this.interoperationOption}: ${puzzle} after ${sleep}s`);
                     await new Promise(resolve => setTimeout(resolve, sleep));
                     const success = await this.evalHtml(puzzle);
