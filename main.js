@@ -7,10 +7,16 @@ const { writeFilePromise, fork_solve } = require('./utils/io');
 const { zfill } = require('./utils/format');
 const Mustache = require('mustache');
 
-function visitHome(context, year) {
-    const {Page} = context;
+async function visitHome(client, year) {
+    const {Page} = client;
+    let ready = new Promise(resolve => {
+        client.once('ready', () => {
+            return resolve(client);
+        });
+    });
     Page.navigate({ url: `https://adventofcode.com/${year}` });
-    return new Promise((resolve) => Page.loadEventFired(() => { resolve(context); }));
+    return await ready;
+    // return new Promise((resolve) => Page.loadEventFired(() => { resolve(context); }));
 }
 
 async function loop(asyncFunc, breakPredicate, sleep, timeoutSeconds, log=false){
@@ -192,7 +198,7 @@ async function start(argv) {
 
     logger.info("Browser online");
 
-    await visitHome({Page, Runtime, Network}, year);
+    await visitHome(client, year);
     await selectAnchor({Page, Runtime, Network}, year, day);
     await visitDay({Page, Runtime, Network}, year, day);
     await fetchPuzzleInput({Page, Runtime, Network}, year, day, puzzleFile, puzzleFolder);
