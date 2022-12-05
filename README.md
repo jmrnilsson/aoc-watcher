@@ -6,10 +6,10 @@ The following configurations have been verified.
 
 | OS  | Browser | Verified |
 |------|------|------|
-| Windows  | Firefox | &#x2611; 2022-12-04 |
-| Windows  | Brave | &#x2611; 2022-12-04 |
-| MacOS  | Firefox | &#x2612; 2022-12-05: Firefox doesn't allow for Javascript injection. |
-| MacOS  | Brave | &#x2612; 2022-12-05: Permission required for disk write but `node-mac-permissions` don't build. |
+| Windows  | Firefox | ✅ 2022-12-04 |
+| Windows  | Brave | ✅ 2022-12-04 |
+| MacOS  | Firefox | ❌ 2022-12-05: Firefox doesn't allow for Javascript injection. |
+| MacOS  | Brave | ❌ 2022-12-05: Permission required for disk write but `node-mac-permissions` don't build. |
 
 - Downloads the puzzle input.
 - Polls a process and reads stardard output or standard error expecting JSON.
