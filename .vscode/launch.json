@@ -11,8 +11,8 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}\\main.js",
-      "args": ["2017-12-01"],
+      "program": "${workspaceFolder}/main.js",
+      "args": ["2017-12-04"],
       "envFile": "${workspaceFolder}/.env"
     }
   ]
