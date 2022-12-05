@@ -186,10 +186,13 @@ class Responder {
 async function start(argv) {
     const start = moment.utc();
     const _day = process.argv.slice(2).length > 0 ? moment(argv[2], 'YYYY-MM-DD') : moment.utc().local();
-    const [execPath, module, puzzleFile, puzzleFolder] = [
+    const environmentVariables = [
         process.env.AOCW_EXEC, process.env.AOCW_MODULE, process.env.AOCW_PUZZLE_FILE, process.env.AOCW_PUZZLE_FOLDER
     ];
-
+    if (!environmentVariables.every(v => v)) {
+        throw new Error("Environment variables not set " + environmentVariables)
+    }
+    const [execPath, module, puzzleFile, puzzleFolder] = environmentVariables;
     const client = await attachChromeDevToolsProtocol();
     const { Network, Page, Runtime } = client
 
