@@ -1,5 +1,4 @@
 const moment = require('moment');
-const path = require('node:path');
 
 const { attachChromeDevToolsProtocol } = require('./utils/protocol');
 const { logger } = require('./utils/log');
