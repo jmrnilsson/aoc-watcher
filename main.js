@@ -1,21 +1,18 @@
 const moment = require('moment');
+const Mustache = require('mustache');
 
 const { attachChromeDevToolsProtocol } = require('./utils/protocol');
 const { logger } = require('./utils/log');
 const { writeFilePromise, fork_solve } = require('./utils/io');
-const { zfill } = require('./utils/format');
-const Mustache = require('mustache');
+const { zfill, parseArgv, findJsonFromOutput } = require('./utils/format');
 
 async function visitHome(client, year) {
     const {Page} = client;
     let ready = new Promise(resolve => {
-        client.once('ready', () => {
-            return resolve(client);
-        });
+        client.once('ready', () => resolve(client));
     });
     Page.navigate({ url: `https://adventofcode.com/${year}` });
     return await ready;
-    // return new Promise((resolve) => Page.loadEventFired(() => { resolve(context); }));
 }
 
 async function loop(asyncFunc, breakPredicate, sleep, timeoutSeconds, log=false){
@@ -32,8 +29,24 @@ async function selectAnchor(context, year, day) {
     const {Runtime} = context;
     const anchor = `document.querySelector('a[href="/${year}/day/${day}"]');`;
     const asyncFunc = () => Runtime.evaluate({ expression: anchor });
-    const breakAt = (a) => a && a.result && a.result.className == "HTMLAnchorElement"
+    const breakAt = (a) => a?.result?.className == "HTMLAnchorElement"
     await loop(asyncFunc, breakAt, 750, 60 * 10, log=true);
+}
+
+
+async function part2Complete(context) {
+    const {Runtime} = context;
+    const txtDaySuccess = 'document.querySelector(\'p[class="day-success"]\').textContent';
+    const txt =  await Runtime.evaluate({ expression: txtDaySuccess });
+    const successMessage = "Both parts of this puzzle are complete";
+    return Boolean(txt?.result?.type == "string" && txt?.result?.value.includes(successMessage));
+}
+
+async function part1Complete(context) {
+    const {Runtime} = context;
+    const h2Part2 = 'document.querySelector(\'h2[id="part2"]\')';
+    const h2 = await Runtime.evaluate({ expression: h2Part2 });
+    return Boolean(h2?.result?.className == "HTMLHeadingElement");
 }
 
 function visitDay(context, year, day) {
@@ -84,7 +97,7 @@ async function fetchPuzzleInput(context, year, day, puzzleFile, puzzleFolder) {
 
     async function interceptXHR(Runtime){
         let timestamp = await Runtime.evaluate({ expression: timestampExpression });
-        if (timestamp && timestamp.result && timestamp.result.value && timestamp.result.type == 'string') {
+        if (timestamp?.result?.value && timestamp?.result?.type == 'string') {
             const {value} = timestamp.result;
             logger.info(`Timestamp of interception: ${value}`);
         }
@@ -138,8 +151,17 @@ class Responder {
                 correct = false;
                 this.seen.add(answer);
                 this.faultAt = moment.utc();
-                if (value.includes("answer is too high")) this.max = answer;
-                else if (value.includes("answer is too low")) this.min = answer;
+                if (value.includes("answer is too high")){
+                    this.max = Math.max(answer, this.max);
+                    logger.info(`***** Answer was too high *****`);
+                }
+                else if (value.includes("answer is too low")){
+                    this.min = Math.min(answer, this.min);
+                    logger.info(`***** Answer was too low *****`);
+                }
+                else {
+                    logger.info(`***** Answer was wrong *****`);
+                }
                 await Runtime.evaluate({ expression: returnToDay });
                 return false;
             }
@@ -162,17 +184,32 @@ class Responder {
     
             try {
                 const fork_args = [this.year, this.day, this.interoperationOption, this.execPath, this.module]
-                let stdOut = await fork_solve(...fork_args);
-                let {ok, puzzle, test} = JSON.parse(stdOut);
-                logger.info(`ok: ${ok} --- test: ${test} --- puzzle: ${puzzle}`);
+                let output = await fork_solve(...fork_args);
+                const jsonOption = findJsonFromOutput(output);
                 
-                if (ok == true && !this.seen.has(puzzle) && puzzle > this.min && puzzle < this.max){
-                    const waitTime = moment.utc().diff(this.faultAt, 'seconds', true);
-                    const sleep = Math.max(Math.min(respondMinimumWait - waitTime, respondMinimumWait * 0.1), 0);
-                    logger.warn(`Will commit answer for ${this.interoperationOption}: ${puzzle} after ${sleep}s`);
-                    await new Promise(resolve => setTimeout(resolve, sleep));
-                    const success = await this.evalHtml(puzzle);
-                    if (success) return puzzle;
+                if (jsonOption){
+                    let {ok, puzzle, test} = jsonOption
+                    logger.info(`ok: ${ok} --- test: ${test} --- puzzle: ${puzzle}\n${output}`);
+                    if (ok == true){
+                        if (this.seen.has(puzzle)){
+                            logger.info(`***** Already seen ${puzzle}. No commit! *****`);
+                            continue;
+                        }
+                        if (puzzle <= this.min){
+                            logger.info(`***** ${puzzle} is too low. No commit! *****`);
+                            continue;
+                        }
+                        if (puzzle >= this.max){
+                            logger.info(`***** ${puzzle} is too high. No commit! *****`);
+                            continue;
+                        }
+                        const waitTime = moment.utc().diff(this.faultAt, 'seconds', true);
+                        const sleep = Math.max(Math.min(respondMinimumWait - waitTime, respondMinimumWait * 0.1), 0);
+                        logger.info(`***** Will commit ${this.interoperationOption}: ${puzzle} after ${sleep}s *****`);
+                        await new Promise(resolve => setTimeout(resolve, sleep));
+                        const success = await this.evalHtml(puzzle);
+                        if (success) return puzzle;
+                    }
                 }
             }
             catch(err){
@@ -183,8 +220,7 @@ class Responder {
 }
 
 async function start(argv) {
-    const start = moment.utc();
-    const _day = process.argv.slice(2).length > 0 ? moment(argv[2], 'YYYY-MM-DD') : moment.utc().local();
+    const [year, day] = parseArgv(process.argv);
     const environmentVariables = [
         process.env.AOCW_EXEC, process.env.AOCW_MODULE, process.env.AOCW_PUZZLE_FILE, process.env.AOCW_PUZZLE_FOLDER
     ];
@@ -193,25 +229,30 @@ async function start(argv) {
     }
     const [execPath, module, puzzleFile, puzzleFolder] = environmentVariables;
     const client = await attachChromeDevToolsProtocol();
-    const { Network, Page, Runtime } = client
-
-    var year = _day.year();
-    var day = _day.date();
-
+    
     logger.info("Browser online");
 
     await visitHome(client, year);
-    await selectAnchor({Page, Runtime, Network}, year, day);
-    await visitDay({Page, Runtime, Network}, year, day);
-    await fetchPuzzleInput({Page, Runtime, Network}, year, day, puzzleFile, puzzleFolder);
-    
-    const responder1 = new Responder({Page, Runtime, Network}, "-json1", year, day, execPath, module);
-    await responder1.start();
-    const responder2 = new Responder({Page, Runtime, Network}, "-json2", year, day, execPath, module);
+    await selectAnchor(client, year, day);
+    await visitDay(client, year, day);
+    await fetchPuzzleInput(client, year, day, puzzleFile, puzzleFolder);
+    let part2Done = await part2Complete(client);
+    if (part2Done) {
+        logger.info("Part 2 already completed.");
+        process.exit();
+    }
+    let part1Done = await part1Complete(client);
+    if (part1Done) {
+        logger.info("Part 1 already completed. Skipping part 1.");
+    }
+    else {
+        const responder1 = new Responder(client, "-json1", year, day, execPath, module);
+        await responder1.start();
+    }
+    const responder2 = new Responder(client, "-json2", year, day, execPath, module);
     await responder2.start();
 
-    const duration = moment.utc().diff(start, 'minutes', true);
-    logger.info(`Done! Good job dudes and dudettes! Total time taken: ${duration}m`);
+    logger.info(`Done! Good job dudes and dudettes!`);
     process.exit();
 }
 

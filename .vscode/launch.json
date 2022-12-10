@@ -12,7 +12,7 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/main.js",
-      "args": ["2022-12-01"],
+      "args": ["2018-01"],
       "envFile": "${workspaceFolder}/.env"
     }
   ]

@@ -10,7 +10,7 @@ function _writeFile(fileName, content) {
   return new Promise((resolve, reject) => {
     fs.writeFile(fileName, content, "utf-8", (err, bytesWritten, _) => {
       if (err) reject(err);
-      logger.info(`Writing file: ${fileName}. Bytes written: ${bytesWritten}`);
+      logger.info(`Writing file: ${fileName}.`);
       resolve();
     });
   });
@@ -40,14 +40,6 @@ async function _createFoldersOverwriteOrCreateFile(folder, fileName, content) {
   await _writeFile(fullName, content)
 }
 
-function findAndStripJsonFromOutput(output) {
-  let re = new RegExp(/{[\w \"\':,]+(uzzle)[\w \"\':,]+}/g);
-  let match = re.exec(output);
-  let jsonOut = match ? JSON.parse(match[0]) : null;
-  let content = jsonOut ? output.replace(match[0], '') : output;
-  return [jsonOut, content];
-}
-
 function _fork_solve(year, day, flag, execPath, module){
   const flag_ = flag || '-json1';
   let args = [Mustache.render(module, {year: year, day: zfill(day, 2)}), flag_];
@@ -63,9 +55,8 @@ function _fork_solve(year, day, flag, execPath, module){
     childProcess.stderr.setEncoding('utf8');
     childProcess.stderr.on('data', (err) => { error += err });
 
-    challenge, strippedContent = findJsonInOutput(content);
-    forkResult = { error: error + strippedContent, challenge: challenge };  
-    childProcess.on('exit', () => { error ? reject(forkResult) : resolve(forkResult); });
+    childProcess.on('exit', () => { error ? reject(error) : resolve(content); });
+    // childProcess.on('exit', () => { error ? reject(to_result(content, error)) : resolve(to_result(content, error)); });
   });
 }
 
@@ -94,5 +85,4 @@ function _requestPromise(options) {
 
 exports.writeFilePromise = _createFoldersOverwriteOrCreateFile;
 exports.fork_solve = _fork_solve;
-exports.findAndStripJsonFromOutput = findAndStripJsonFromOutput;
 // exports.requestPromise = _requestPromise; Supported, but not needed since we need attached credentials.
