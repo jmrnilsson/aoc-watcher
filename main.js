@@ -236,6 +236,7 @@ async function start(argv) {
     await selectAnchor(client, year, day);
     await visitDay(client, year, day);
     await fetchPuzzleInput(client, year, day, puzzleFile, puzzleFolder);
+    
     let part2Done = await part2Complete(client);
     if (part2Done) {
         logger.info("Part 2 already completed.");
