@@ -1,6 +1,6 @@
 # 🎁🎄 AoC 🤶 Watcher 🎄 🎁
 
-Allows for an automated browser experience during `Advent of Code` subsmissions. Verified with [Python](https://www.python.org/downloads/) interop and the current LTS [NodeJS](https://nodejs.org/en/download/). If you prefer something else there are serveral [other tools](https://github.com/scarvalhojr/aoc-cli) that could be worth a try. Built with [Chrome Remote Interface](https://www.npmjs.com/package/chrome-remote-interface) and Javascript.
+Allows for an automated browser experience during `Advent of Code` subsmissions. Verified with [Python](https://www.python.org/downloads/) interop and the current LTS [NodeJS](https://nodejs.org/en/download/). If you prefer something else there are serveral other tools that could be worth a try. Examples are listed below. Built with [Chrome Remote Interface](https://www.npmjs.com/package/chrome-remote-interface) and Javascript.
 
 The following configurations have been verified or documented as unsupported.
 
@@ -62,3 +62,10 @@ example below.
 Advent of Code is a puzzle oriented calendar by [Eric Wastl](https://twitter.com/ericwastl) and other contributors. Please consider [supporting their work](https://adventofcode.com/2022/support).
 
 This repository is provided under [MIT](LICENSE) and isn't directly affiliated with Advent of Code, Firefox, Brave, Safari or Chrome. Any referenced libraries are licensed separately.
+
+### Other tools
+These are example of other Advent of Code tools for puzzle download or answer submission. I do not recommended or condone their use. 
+- https://github.com/scarvalhojr/aoc-cli
+- https://github.com/wimglenn/advent-of-code-data
+- https://github.com/gobanos/aoc-runner
+
