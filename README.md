@@ -15,9 +15,9 @@ The following configurations have been verified or documented as unsupported.
 - Awaits todays puzzle by long-polling the DOM. No additional HTTP requests.
 - Navigates to puzzle once available.
 - Downloads the puzzle input.
-- Polls a process and extracts JSON from a standard out.
+- Long-polls a process standard output and attempts a JSON extract.
 - Prints any pending errors while coding.
-- Submits and continues to part 2 and repeats.
+- Submits and continues to part 2.
 - Skips if a previous submission was correct.
 - In-process prevention against duplicate submissions.
 - Keeps track of bounds for failed submissions ("too high" or "low" answers), yet again in-process.
