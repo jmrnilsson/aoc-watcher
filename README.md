@@ -58,12 +58,12 @@ example below.
 }
 ```
 
-## ⭐Additional notes
+## ⭐ Additional notes
 Advent of Code is a puzzle oriented calendar by [Eric Wastl](https://twitter.com/ericwastl) and other contributors. Please consider [supporting their work](https://adventofcode.com/2022/support).
 
 This repository is provided under [MIT](LICENSE) and isn't directly affiliated with Advent of Code, Firefox, Brave, Safari or Chrome. Any referenced libraries are licensed separately.
 
-### Other tools
+### ⭐ Other tools
 These are example of other Advent of Code tools for puzzle download or answer submission. I do not recommended or condone their use. 
 - https://github.com/scarvalhojr/aoc-cli
 - https://github.com/wimglenn/advent-of-code-data
