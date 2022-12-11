@@ -34,7 +34,7 @@ The browser will have to authenticate at some point. Might just do that in same 
 | Running some other day  | `node .\main.js "2022-11"` |  Requires a debuggable browser and enviroment variables (see below). |
 
 ### ⭐ Notes on running
-Some enviroment variables needs to be set. Here an example (on Windows) but you might just want to change the script used or use an
+Some environment variables needs to be set. Here an example (on Windows) but you might just want to change the script used or use an
 env-file. Days will be padded with single digit zero fill (for now). *On Windows I prefer to copy variables into a Powershell script.*
 
 ```pwsh
