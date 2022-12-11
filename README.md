@@ -18,9 +18,9 @@ The following configurations have been verified or documented as unsupported.
 - Polls a process and extracts JSON from a standard out.
 - Prints any pending errors while coding.
 - Submits and continues to part 2 and repeats.
-- Skips a previous submission if correct.
+- Skips if a previous submission was correct.
 - In-process prevention against duplicate submissions.
-- Keeps track of "too high" or "low" failed submissions in-process.
+- Keeps track of bounds for failed submissions ("too high" or "low" answers), yet again in-process.
 
 The browser will have to authenticate at some point. Might just do that in same browser that will run the debugger.
 
