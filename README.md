@@ -24,7 +24,7 @@ The following configurations have been verified or documented as unsupported.
 
 The browser will have to authenticate at some point. Might just do that in same browser that will run the debugger.
 
-## ⭐Tasks
+## ⭐ Tasks
 | Purpose  | Browser | Comment |
 |------|------|------|
 | Install  | `npm i` | |
@@ -33,7 +33,7 @@ The browser will have to authenticate at some point. Might just do that in same 
 | Running today  | `node .\main.js` | Requires a debuggable browser and enviroment variables (see below). |
 | Running some other day  | `node .\main.js "2022-11"` |  Requires a debuggable browser and enviroment variables (see below). |
 
-### ⭐Notes on running
+### ⭐ Notes on running
 Some enviroment variables needs to be set. Here an example (on Windows) but you might just want to change the script used or use an
 env-file. Days will be padded with single digit zero fill (for now). *On Windows I prefer to copy variables into a Powershell script.*
 
