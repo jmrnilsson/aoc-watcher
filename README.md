@@ -9,7 +9,7 @@ The following configurations have been verified or documented as unsupported.
 | Windows  | Firefox | ✅ 2022-12-04 |
 | Windows  | Brave | ✅ 2022-12-04 |
 | MacOS  | Firefox | ❌ 2022-12-05: Firefox doesn't allow for Javascript injection. |
-| MacOS  | Brave | ❌ 2022-12-05: Permission required for disk write but `node-mac-permissions` don't build. |
+| MacOS  | Brave | ✅ 2022-12-22 |
 
 ## ⭐ Basic outline
 - Awaits todays puzzle by long-polling the DOM. No additional HTTP requests.
