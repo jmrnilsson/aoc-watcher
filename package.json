@@ -4,7 +4,7 @@
   "description": "A puzzle input browser scraper and solution watcher",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "tsc && node out/main.js",
     "test": "jest",
     "lint": "npx tsc"
   },

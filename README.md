@@ -30,8 +30,8 @@ The browser will have to authenticate at some point. Might just do that in same 
 | Install  | `npm i` | |
 | Test  | `npm test` | Runner provided by jasmine |
 | Starting browser  | `./brave.ps1` | `firefox.ps1` and `chrome.sh` also available but may have to be modified to match path. |
-| Running today  | `node .\main.js` | Requires a debuggable browser and enviroment variables (see below). |
-| Running some other day  | `node .\main.js "2022-11"` |  Requires a debuggable browser and enviroment variables (see below). |
+| Running today  | `npm start` | Requires a debuggable browser and enviroment variables (see below). |
+| Running some other day  | `npm start "2018-02"` |  Requires a debuggable browser and enviroment variables (see below). |
 
 ### ⭐ Notes on running
 Some environment variables needs to be set. Here an example (on Windows) but you might just want to change the script used or use an

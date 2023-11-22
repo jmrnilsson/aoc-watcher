@@ -5,7 +5,7 @@ import CDP from 'chrome-remote-interface';
 import { attachChromeDevToolsProtocol } from './utils/protocol';
 import { logger } from './utils/log';
 import { writeFilePromise, fork_solve } from './utils/io';
-import { zfill, parseArgv, findJsonFromOutput } from './utils/format';
+import { zfill, parseArgv, findJsonFromOutput, isNumeric } from './utils/format';
 import {ProtocolProxyApi} from 'devtools-protocol/types/protocol-proxy-api'
 
 async function visitHome(client: CDP.Client, year: number) {
@@ -127,7 +127,7 @@ async function fetchPuzzleInput(context: CDP.Client, year: number, day: number, 
 class Responder {
     runtime: ProtocolProxyApi.RuntimeApi;
     interoperationOption: InteropPart;
-    seen: Set<number>;
+    seen: Set<string>;
     max: number
     min: number;
     faultAt: moment.Moment;
@@ -140,7 +140,7 @@ class Responder {
         // @ts-ignore
         this.runtime = context.Runtime;
         this.interoperationOption = interoperationOption;
-        this.seen = new Set<number>();
+        this.seen = new Set<string>();
         this.max = Infinity,
         this.min = -Infinity;
         this.faultAt = moment([2010, 1, 1]);
@@ -150,11 +150,11 @@ class Responder {
         this.module = module;
     }
 
-    async evalHtml(answer: number) {
+    async evalHtml(answer: string) {
         const Runtime = this.runtime;
         const puzzleResponse = 'document.querySelector("p").textContent;';
         const returnToDay = `document.querySelector('a[href="/${this.year}/day/${this.day}]').click();`;
-        const typeInput = `document.querySelector('input[name="answer"]').value = ${Number(answer)};`;
+        const typeInput = `document.querySelector('input[name="answer"]').value = "${answer}";`;
         const submit = `document.querySelector('input[type="submit"]').click();` 
         const hasNext = `document.querySelector("a[href*='part2']");`
         const next = `document.querySelector("a[href*='part2']").click();`
@@ -168,12 +168,16 @@ class Responder {
                 this.seen.add(answer);
                 this.faultAt = moment.utc();
                 if (value.includes("answer is too high")){
-                    this.max = Math.max(answer, this.max);
-                    logger.info(`***** Answer was too high *****`);
+                    logger.info(`***** Answer was too high *****`);    
+                    if (isNumeric(answer)) {
+                        this.max = Math.max(Number(answer), this.max);
+                    }
                 }
                 else if (value.includes("answer is too low")){
-                    this.min = Math.min(answer, this.min);
                     logger.info(`***** Answer was too low *****`);
+                    if (isNumeric(answer)) {
+                        this.min = Math.min(Number(answer), this.min);
+                    }
                 }
                 else {
                     logger.info(`***** Answer was wrong *****`);

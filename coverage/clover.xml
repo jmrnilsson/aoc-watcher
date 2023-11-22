@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1700609466692" clover="3.2.0">
-  <project timestamp="1700609466692" name="All files">
-    <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0" elements="0" coveredelements="0" complexity="0" loc="0" ncloc="0" packages="0" files="0" classes="0"/>
+<coverage generated="1700613418806" clover="3.2.0">
+  <project timestamp="1700613418806" name="All files">
+    <metrics statements="27" coveredstatements="23" conditionals="10" coveredconditionals="9" methods="4" coveredmethods="3" elements="41" coveredelements="35" complexity="0" loc="27" ncloc="27" packages="1" files="1" classes="1"/>
+    <file name="format.ts" path="M:\devwork\aoc-watcher\utils\format.ts">
+      <metrics statements="27" coveredstatements="23" conditionals="10" coveredconditionals="9" methods="4" coveredmethods="3"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="3" count="0" type="stmt"/>
+      <line num="4" count="0" type="stmt"/>
+      <line num="5" count="0" type="stmt"/>
+      <line num="6" count="0" type="stmt"/>
+      <line num="7" count="1" type="stmt"/>
+      <line num="8" count="3" type="cond" truecount="1" falsecount="0"/>
+      <line num="9" count="3" type="stmt"/>
+      <line num="10" count="3" type="stmt"/>
+      <line num="11" count="3" type="cond" truecount="1" falsecount="0"/>
+      <line num="12" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="13" count="2" type="stmt"/>
+      <line num="14" count="3" type="stmt"/>
+      <line num="15" count="3" type="stmt"/>
+      <line num="16" count="1" type="stmt"/>
+      <line num="17" count="3" type="cond" truecount="1" falsecount="0"/>
+      <line num="18" count="3" type="stmt"/>
+      <line num="19" count="3" type="stmt"/>
+      <line num="20" count="3" type="cond" truecount="0" falsecount="1"/>
+      <line num="21" count="3" type="stmt"/>
+      <line num="22" count="1" type="stmt"/>
+      <line num="23" count="1" type="stmt"/>
+      <line num="24" count="9" type="cond" truecount="1" falsecount="0"/>
+      <line num="25" count="9" type="cond" truecount="2" falsecount="0"/>
+      <line num="26" count="9" type="cond" truecount="1" falsecount="0"/>
+      <line num="27" count="9" type="stmt"/>
+    </file>
   </project>
 </coverage>

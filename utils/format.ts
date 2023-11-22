@@ -19,3 +19,9 @@ export function findJsonFromOutput(output: string) {
   let match = re.exec(output);
   return match ? JSON.parse(match[0]) : null;
 }
+
+
+export function isNumeric(value: string, allowSeparator: boolean = false) {
+  const pattern = allowSeparator ? /^(\d\.,)+$/ : /^\d+$/;
+  return pattern.test(value) && !isNaN(parseFloat(value));
+}
