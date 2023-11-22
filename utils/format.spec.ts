@@ -1,4 +1,6 @@
-const { parseArgv, findJsonFromOutput } = require('../utils/format.js');
+import { describe, it, expect, test} from '@jest/globals'
+import { parseArgv, findJsonFromOutput, isNumeric } from './format';
+import { isNumericLiteral } from 'typescript';
 
 describe("Year day argv parser", function () {
   it("can parse iso date", function () {
@@ -48,5 +50,34 @@ describe("Regex", function () {
   });
 });
 
+
+describe("isNumeric", function () {
+  let cases: [string, boolean][] = [
+    ["1", true],
+    ["1 ", false],
+    [" 1", false],
+    ["0912039", true],
+    ["091a2039", false],
+    ["Paretis", false]
+  ];
+
+  let casesSeparator: [string, boolean][] = [
+    ["1.", true],
+    ["1,1", true],
+    ["Paretis", false]
+  ];
+
+  test.each(cases)("given %p returns %p", (value, expected) => {
+    expect(isNumeric(value)).toBe(expected);
+  });
+
+  test.each(casesSeparator)("given %p allowing separators returns %p", (value, expected) => {
+    expect(isNumeric(value, true)).toBe(expected);
+  });
+  
+  // test.each(cases)("given literal %p returns %p", ([value, expected]) => {
+  //   expect(isNumericLiteral(value)).toBe(expected);
+  // });
+});
 
 

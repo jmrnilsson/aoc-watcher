@@ -1,8 +1,7 @@
-const CDP = require('chrome-remote-interface');
-const { logger } = require('./log');
+import CDP from 'chrome-remote-interface';
+import { logger } from './log';
 
-
-async function attachChromeDevToolsProtocol() {
+export async function attachChromeDevToolsProtocol(): Promise<CDP.Client> {
     const cdp = await CDP();
     cdp.Network.requestWillBeSent((params) => {
         logger.info(params.request.url);
@@ -12,5 +11,3 @@ async function attachChromeDevToolsProtocol() {
     await cdp.Runtime.enable();
     return cdp;
 }
-
-exports.attachChromeDevToolsProtocol = attachChromeDevToolsProtocol;

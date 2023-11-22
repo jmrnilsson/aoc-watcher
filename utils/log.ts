@@ -1,4 +1,4 @@
-const winston = require('winston');
+import winston from 'winston';
 
 const alignedWithColorsAndTime = winston.format.combine(
   winston.format.colorize(),
@@ -14,11 +14,9 @@ const alignedWithColorsAndTime = winston.format.combine(
   }),
 );
 
-const logger = winston.createLogger({
+export const logger = winston.createLogger({
   level: 'info',
   transports: [
     new winston.transports.Console({format: alignedWithColorsAndTime})
   ]
 });
-
-exports.logger = logger;

@@ -1,21 +1,23 @@
-const moment = require('moment');
-const Mustache = require('mustache');
+import dotenv from 'dotenv';
+import moment from 'moment';
+import Mustache from 'mustache';
+import CDP from 'chrome-remote-interface';
+import { attachChromeDevToolsProtocol } from './utils/protocol';
+import { logger } from './utils/log';
+import { writeFilePromise, fork_solve } from './utils/io';
+import { zfill, parseArgv, findJsonFromOutput, isNumeric } from './utils/format';
+import {ProtocolProxyApi} from 'devtools-protocol/types/protocol-proxy-api'
 
-const { attachChromeDevToolsProtocol } = require('./utils/protocol');
-const { logger } = require('./utils/log');
-const { writeFilePromise, fork_solve } = require('./utils/io');
-const { zfill, parseArgv, findJsonFromOutput } = require('./utils/format');
-
-async function visitHome(client, year) {
+async function visitHome(client: CDP.Client, year: number) {
     const {Page} = client;
     let ready = new Promise(resolve => {
-        client.once('ready', () => resolve(client));
+        client.on('ready', () => resolve(client));
     });
     Page.navigate({ url: `https://adventofcode.com/${year}` });
     return await ready;
 }
 
-async function loop(asyncFunc, breakPredicate, sleep, timeoutSeconds, log=false){
+async function loop(asyncFunc: Function, breakPredicate: Function, sleep: number, timeoutSeconds: number, log: boolean = false){
     const ts = moment.utc();
     while (moment.utc().diff(ts, 'seconds', true) < timeoutSeconds){
         if (log) logger.info(`Polling wait ${sleep}ms`);
@@ -25,16 +27,16 @@ async function loop(asyncFunc, breakPredicate, sleep, timeoutSeconds, log=false)
     }
 }
 
-async function selectAnchor(context, year, day) {
+async function selectAnchor(context: CDP.Client, year: number, day: number) {
     const {Runtime} = context;
     const anchor = `document.querySelector('a[href="/${year}/day/${day}"]');`;
     const asyncFunc = () => Runtime.evaluate({ expression: anchor });
-    const breakAt = (a) => a?.result?.className == "HTMLAnchorElement"
-    await loop(asyncFunc, breakAt, 750, 60 * 10, log=true);
+    const breakAt = (a: any) => a?.result?.className == "HTMLAnchorElement"
+    await loop(asyncFunc, breakAt, 750, 60 * 10, true);
 }
 
 
-async function part2Complete(context) {
+async function part2Complete(context: CDP.Client) {
     const {Runtime} = context;
     const txtDaySuccess = 'document.querySelector(\'p[class="day-success"]\').textContent';
     const txt =  await Runtime.evaluate({ expression: txtDaySuccess });
@@ -42,20 +44,20 @@ async function part2Complete(context) {
     return Boolean(txt?.result?.type == "string" && txt?.result?.value.includes(successMessage));
 }
 
-async function part1Complete(context) {
+async function part1Complete(context: CDP.Client) {
     const {Runtime} = context;
     const h2Part2 = 'document.querySelector(\'h2[id="part2"]\')';
     const h2 = await Runtime.evaluate({ expression: h2Part2 });
     return Boolean(h2?.result?.className == "HTMLHeadingElement");
 }
 
-function visitDay(context, year, day) {
+function visitDay(context: CDP.Client, year: number, day: number) {
     const {Page} = context;
     Page.navigate({ url: `https://adventofcode.com/${year}/day/${day}` });
     return new Promise((resolve) => Page.loadEventFired(() => { resolve(context); }));
 }
 
-async function fetchPuzzleInput(context, year, day, puzzleFile, puzzleFolder) {
+async function fetchPuzzleInput(context: CDP.Client, year: number, day: number, puzzleFile: string, puzzleFolder: string) {
     const {Runtime} = context;
     const responseTextExpression = `(function () {
         var el = document.getElementById("ab0ed957-70d7-4ea4-8dcb-5488ea950d1f");
@@ -95,15 +97,15 @@ async function fetchPuzzleInput(context, year, day, puzzleFile, puzzleFolder) {
         x.send();
       }());`;
 
-    async function interceptXHR(Runtime){
-        let timestamp = await Runtime.evaluate({ expression: timestampExpression });
+    async function interceptXHR(runtime: ProtocolProxyApi.RuntimeApi){
+        let timestamp = await runtime.evaluate({ expression: timestampExpression });
         if (timestamp?.result?.value && timestamp?.result?.type == 'string') {
             const {value} = timestamp.result;
             logger.info(`Timestamp of interception: ${value}`);
         }
         else return false;
 
-        let xhr = await Runtime.evaluate({ expression: responseTextExpression });
+        let xhr = await runtime.evaluate({ expression: responseTextExpression });
         if (xhr && xhr.result && xhr.result.value && xhr.result.type == 'string'){
             const {type, value} = xhr.result;
             const content = value.concat("\n");  // New line is stripped from HTML tag attribute.
@@ -116,17 +118,31 @@ async function fetchPuzzleInput(context, year, day, puzzleFile, puzzleFolder) {
     }
     
     Runtime.evaluate({ expression: xhr });
-    await loop(() => interceptXHR(Runtime), (ok) => ok, 100, 10, log=true);
+    // @ts-ignore
+    const rt = Runtime as ProtocolProxyApi.RuntimeApi;
+    await loop(() => interceptXHR(rt), (ok: any) => ok, 100, 10, true);
 }
 
 
 class Responder {
-    constructor(context, interoperationOption, year, day, execPath, module) {
+    runtime: ProtocolProxyApi.RuntimeApi;
+    interoperationOption: InteropPart;
+    seen: Set<string>;
+    max: number
+    min: number;
+    faultAt: moment.Moment;
+    year: number;
+    day: number;
+    execPath: string;
+    module: string;
+
+    constructor(context: CDP.Client, interoperationOption: InteropPart, year: number, day: number, execPath: string, module: string) {
+        // @ts-ignore
         this.runtime = context.Runtime;
         this.interoperationOption = interoperationOption;
-        this.seen = new Set();
+        this.seen = new Set<string>();
         this.max = Infinity,
-        this.min = -1;
+        this.min = -Infinity;
         this.faultAt = moment([2010, 1, 1]);
         this.year = year;
         this.day = day;
@@ -134,11 +150,11 @@ class Responder {
         this.module = module;
     }
 
-    async evalHtml(answer) {
+    async evalHtml(answer: string) {
         const Runtime = this.runtime;
         const puzzleResponse = 'document.querySelector("p").textContent;';
         const returnToDay = `document.querySelector('a[href="/${this.year}/day/${this.day}]').click();`;
-        const typeInput = `document.querySelector('input[name="answer"]').value = ${Number(answer)};`;
+        const typeInput = `document.querySelector('input[name="answer"]').value = "${answer}";`;
         const submit = `document.querySelector('input[type="submit"]').click();` 
         const hasNext = `document.querySelector("a[href*='part2']");`
         const next = `document.querySelector("a[href*='part2']").click();`
@@ -152,12 +168,16 @@ class Responder {
                 this.seen.add(answer);
                 this.faultAt = moment.utc();
                 if (value.includes("answer is too high")){
-                    this.max = Math.max(answer, this.max);
-                    logger.info(`***** Answer was too high *****`);
+                    logger.info(`***** Answer was too high *****`);    
+                    if (isNumeric(answer)) {
+                        this.max = Math.max(Number(answer), this.max);
+                    }
                 }
                 else if (value.includes("answer is too low")){
-                    this.min = Math.min(answer, this.min);
                     logger.info(`***** Answer was too low *****`);
+                    if (isNumeric(answer)) {
+                        this.min = Math.min(Number(answer), this.min);
+                    }
                 }
                 else {
                     logger.info(`***** Answer was wrong *****`);
@@ -183,8 +203,7 @@ class Responder {
             await new Promise(resolve => setTimeout(resolve, sleep));
     
             try {
-                const fork_args = [this.year, this.day, this.interoperationOption, this.execPath, this.module]
-                let output = await fork_solve(...fork_args);
+                let output = await fork_solve(this.year, this.day, this.interoperationOption, this.execPath, this.module);
                 const jsonOption = findJsonFromOutput(output);
                 
                 if (jsonOption){
@@ -219,16 +238,17 @@ class Responder {
     }
 }
 
-async function start(argv) {
-    const [year, day] = parseArgv(process.argv);
-    const environmentVariables = [
-        process.env.AOCW_EXEC, process.env.AOCW_MODULE, process.env.AOCW_PUZZLE_FILE, process.env.AOCW_PUZZLE_FOLDER
+async function start(argv: string[]) {
+    dotenv.config();
+    const [year, day] = parseArgv(argv);
+    const envVars = [
+        process.env.AOCW_EXEC!, process.env.AOCW_MODULE!, process.env.AOCW_PUZZLE_FILE!, process.env.AOCW_PUZZLE_FOLDER!
     ];
-    if (!environmentVariables.every(v => v)) {
-        throw new Error("Environment variables not set " + environmentVariables)
+    if (!envVars.every(v => v)) {
+        throw new Error("Environment variables not set " + envVars)
     }
-    const [execPath, module, puzzleFile, puzzleFolder] = environmentVariables;
-    const client = await attachChromeDevToolsProtocol();
+    const [execPath, module, puzzleFile, puzzleFolder] = envVars;
+    const client: CDP.Client = await attachChromeDevToolsProtocol();
     
     logger.info("Browser online");
 
