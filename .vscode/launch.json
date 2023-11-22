@@ -7,29 +7,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Start 2018-02",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "tsc && node ${workspaceFolder}/out/main.js",
-      "args": ["2018-02"],
-      "envFile": "${workspaceFolder}/.env"
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Debug 2018-02",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/out/main.js",
-      "args": ["2018-02"],
-      "envFile": "${workspaceFolder}/.env"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug TypeScript 2018-02",
       "program": "${workspaceFolder}/main.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
       "args": ["2018-02"],
