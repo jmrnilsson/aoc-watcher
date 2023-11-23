@@ -7,10 +7,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug 2018-02",
-      "program": "${workspaceFolder}/main.ts",
+      "name": "Debug 2018-04",
+      "program": "${workspaceFolder}/src/main.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "args": ["2018-02"],
+      "args": ["2018-04"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"]
     },
     {
@@ -20,7 +20,7 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}/main.js",
+      "program": "${workspaceFolder}/src/main.js",
       "args": ["2018-02"],
       "envFile": "${workspaceFolder}/.env"
     }

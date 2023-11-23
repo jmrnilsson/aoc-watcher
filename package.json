@@ -2,7 +2,7 @@
   "name": "aoc-watcher",
   "version": "0.0.2",
   "description": "A puzzle input browser scraper and solution watcher",
-  "main": "index.js",
+  "main": "./out/main.js",
   "scripts": {
     "start": "tsc && node out/main.js",
     "test": "jest",

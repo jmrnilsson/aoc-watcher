@@ -1,17 +1,18 @@
 import moment from 'moment';
+import { YearDay, AdventError } from '../types';
 
 export function zfill(digits: number, n: number){
-  if (n > 7) throw Error(`Larger zero fills not supported (n=${n})`);
+  if (n > 7) throw new AdventError(`Larger zero fills not supported (n=${n})`);
   return('000000000000' + digits).slice(-n);
 }
 
-export function parseArgv(argv: string[], at: number = 2): [number, number] {
+export function parseArgvToDate(argv: string[], at: number = 2): YearDay {
   let day: moment.Moment = moment.utc().local();
   const dateArg: string = argv[at];
   if (dateArg){
       day = dateArg.length > 7 ? moment(dateArg, 'YYYY-MM-DD') : moment(dateArg, 'YYYY-DD');
   }
-  return [day.year(), day.date()];
+  return {year: day.year(), day: day.date()};
 }
 
 export function findJsonFromOutput(output: string) {
