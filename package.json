@@ -1,8 +1,8 @@
 {
-  "name": "solvewatcher",
-  "version": "0.0.1",
+  "name": "aoc-watcher",
+  "version": "0.0.2",
   "description": "A puzzle input browser scraper and solution watcher",
-  "main": "index.js",
+  "main": "./out/main.js",
   "scripts": {
     "start": "tsc && node out/main.js",
     "test": "jest",
@@ -15,7 +15,7 @@
     "dotenv": "^16.3.1",
     "moment": "^2.29.4",
     "mustache": "^4.2.0",
-    "winston": "^3.8.2"
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "@types/chrome-remote-interface": "^0.31.13",

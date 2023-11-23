@@ -1,7 +1,9 @@
 {
-  "include": ["**.ts", "**.spec.ts"],
+  "include": ["**.ts", "**.spec.ts", "src/main.ts", "src/types.ts", "src/types.ts", "src/types.ts", "src/index.d.ts"],
   "exclude": [".node_modules/**"],
   "compilerOptions": {
+    // "declaration": true,
+    // "declarationDir": "./src/types",
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
     /* Projects */

@@ -45,6 +45,14 @@ $env:AOCW_MODULE = 'C:\\development\\aoc\\year_{{year}}\\day_{{day}}\\solve.py'
 $env:AOCW_EXEC = 'C:\\development\\aoc\\.venv\\Scripts\\python.exe'
 ```
 
+or in an `.env`:
+```txt
+AOCW_PUZZLE_FILE=puzzle.txt
+AOCW_PUZZLE_FOLDER=M:\\development\\aoc\\year_{{year}}\\day_{{day}}\\
+AOCW_MODULE=M:\\development\\aoc\\year_{{year}}\\day_{{day}}\\solve.py
+AOCW_EXEC=M:\\development\\aoc\\.venv\\Scripts\\python.exe
+```
+
 ## ⭐ Implementing support for puzzles answers
 The watcher does interop via standard output from a user configured process. If the output contains a flat JSON
 dictionary with the word `uzzle` in the message it it's results will processed. It generally must also conform to the
