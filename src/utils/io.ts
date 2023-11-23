@@ -14,7 +14,7 @@ export type ForkChildProcessForSolveEvalArguments = {
   module: string;
 }
 
-export async function writeFilePromise(folder: string, fileName: string, content: string): Promise<void> {
+export async function writeFile(folder: string, fileName: string, content: string): Promise<void> {
   if (!fs.existsSync(folder)) {
     logger.info(`Creating dir: ${folder}`);
     fs.mkdirSync(folder, { recursive: true });

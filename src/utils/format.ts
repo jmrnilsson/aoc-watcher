@@ -15,7 +15,7 @@ export function parseArgvToDate(argv: string[], at: number = 2): YearDay {
   return {year: day.year(), day: day.date()};
 }
 
-export function findJsonFromOutput(output: string) {
+export function parseJsonFromStandardOutputOrNull(output: string) {
   let re = new RegExp(/{[\w- \"\':,]+(uzzle)[\w- \"\':,]+}/g);
   let match = re.exec(output);
   return match ? JSON.parse(match[0]) : null;

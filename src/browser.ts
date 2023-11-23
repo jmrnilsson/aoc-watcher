@@ -2,7 +2,7 @@ import moment from 'moment';
 import Mustache from 'mustache';
 import CDP from 'chrome-remote-interface';
 import { logger } from './utils/log';
-import { writeFilePromise } from './utils/io';
+import { writeFile } from './utils/io';
 import { zfill } from './utils/format';
 import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api'
 import { PuzzlePart, YearDay } from './types';
@@ -105,7 +105,7 @@ export class AdventBrowser {
       const content = value.concat("\n");  // New line is stripped from HTML tag attribute.
       logger.info(`XHR done. Content type: ${type} Content length: ${content.length}`);
       const folder = Mustache.render(this.puzzleFolder, { year: this.date.year, day: zfill(this.date.day, 2) });
-      await writeFilePromise(folder, this.puzzleFile, content);
+      await writeFile(folder, this.puzzleFile, content);
       return true
     }
     else new Error(`Unexpected mutation of XHR response: ${xhr}`);
