@@ -83,7 +83,7 @@ export class AdventBrowser {
 
   async IsSolved(partNumber: PuzzlePart) {
     if (partNumber === 1) return await this.part1IsSolved();
-    return await this.part2IsSolved;
+    return await this.part2IsSolved();
   }
 
   visitDay() {

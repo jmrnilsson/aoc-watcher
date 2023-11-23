@@ -89,7 +89,7 @@ export class AutoResponder {
               
               if (maybeJson){
                   let {ok, puzzle, test} = maybeJson
-                  logger.info(`ok: ${ok} --- test: ${test} --- puzzle: ${puzzle}\n${output}`);
+                  logger.info(`\n${output}`);
                   if (ok == true){
                       if (this.seen.has(puzzle)){
                           logger.info(`***** Already seen ${puzzle}. *****`);
