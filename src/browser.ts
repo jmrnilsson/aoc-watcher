@@ -1,12 +1,11 @@
-import dotenv from 'dotenv';
 import moment from 'moment';
 import Mustache from 'mustache';
 import CDP from 'chrome-remote-interface';
-import { attachChromeDevToolsProtocol } from './utils/protocol';
 import { logger } from './utils/log';
-import { writeFilePromise, fork_solve } from './utils/io';
-import { zfill, parseArgv, findJsonFromOutput, isNumeric } from './utils/format';
+import { writeFilePromise } from './utils/io';
+import { zfill } from './utils/format';
 import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api'
+import { PuzzlePart, YearDay } from './types';
 
 type LoopArguments = {
   asyncFunc: Function;
@@ -16,18 +15,10 @@ type LoopArguments = {
   log: boolean;
 }
 
-type YearDay = {
-  year: number;
-  day: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25;
-}
-
 type XhrInterceptionArguments = {
   transactionStartedExpression: string;
   responsePayloadExpression: string;
-  date: YearDay;
-  puzzleFolder: string;
-  puzzleFile: string;
-}
+};
 
 async function loop(params: LoopArguments) {
   params.log ??= false;
@@ -40,11 +31,17 @@ async function loop(params: LoopArguments) {
   }
 }
 
-class Crawler {
+export class AdventBrowser {
   client: CDP.Client;
+  date: YearDay;
+  puzzleFolder: string;
+  puzzleFile: string;
 
-  constructor(client: CDP.Client) {
+  constructor(client: CDP.Client, date: YearDay, puzzleFolder: string, puzzleFile: string) {
     this.client = client;
+    this.date = date;
+    this.puzzleFolder = puzzleFolder;
+    this.puzzleFile = puzzleFile;
   }
 
   private get runtime(): ProtocolProxyApi.RuntimeApi {
@@ -58,40 +55,43 @@ class Crawler {
     return this.client.Page;
   }
 
-  async visitHome(client: CDP.Client, year: number) {
-    let ready = new Promise(resolve => {
-      this.client.on('ready', () => resolve(client));
-    });
-    this.page.navigate({ url: `https://adventofcode.com/${year}` });
+  async visitHome() {
+    let ready = new Promise(resolve => { this.client.on('ready', resolve) });
+    this.page.navigate({ url: `https://adventofcode.com/${this.date.year}` });
     return await ready;
   }
 
-  async longPollDailyUnlock(date: YearDay) {
-    const anchor = `document.querySelector('a[href="/${date.year}/day/${date.day}"]');`;
+  async longPollDailyUnlock() {
+    const anchor = `document.querySelector('a[href="/${this.date.year}/day/${this.date.day}"]');`;
     const asyncFunc = () => this.runtime.evaluate({ expression: anchor });
     const breakPredicate = (a: any) => a?.result?.className == "HTMLAnchorElement"
     await loop({ asyncFunc, breakPredicate, sleep: 750, timeoutSeconds: 60 * 10, log: true });
   }
 
-  async part2IsSolved() {
+  private async part2IsSolved() {
     const txtDaySuccess = 'document.querySelector(\'p[class="day-success"]\').textContent';
     const txt = await this.runtime.evaluate({ expression: txtDaySuccess });
     const successMessage = "Both parts of this puzzle are complete";
     return Boolean(txt?.result?.type == "string" && txt?.result?.value.includes(successMessage));
   }
 
-  async part1IsSolved() {
+  private async part1IsSolved() {
     const h2Part2 = 'document.querySelector(\'h2[id="part2"]\')';
     const h2 = await this.runtime.evaluate({ expression: h2Part2 });
     return Boolean(h2?.result?.className == "HTMLHeadingElement");
   }
 
-  visitDay(date: YearDay) {
-    this.page.navigate({ url: `https://adventofcode.com/${date.year}/day/${date.day}` });
+  async IsSolved(partNumber: PuzzlePart) {
+    if (partNumber === 1) return await this.part1IsSolved();
+    return await this.part2IsSolved;
+  }
+
+  visitDay() {
+    this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}` });
     return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
   }
 
-  private async interceptXHR(params: XhrInterceptionArguments) {
+  private async interceptXhr(params: XhrInterceptionArguments) {
     let timestamp = await this.runtime.evaluate({ expression: params.transactionStartedExpression });
     if (timestamp?.result?.value && timestamp?.result?.type == 'string') {
       const { value } = timestamp.result;
@@ -104,14 +104,14 @@ class Crawler {
       const { type, value } = xhr.result;
       const content = value.concat("\n");  // New line is stripped from HTML tag attribute.
       logger.info(`XHR done. Content type: ${type} Content length: ${content.length}`);
-      const folder = Mustache.render(params.puzzleFolder, { year: params.date.year, day: zfill(params.date.day, 2) });
-      await writeFilePromise(folder, params.puzzleFile, content);
+      const folder = Mustache.render(this.puzzleFolder, { year: this.date.year, day: zfill(this.date.day, 2) });
+      await writeFilePromise(folder, this.puzzleFile, content);
       return true
     }
     else new Error(`Unexpected mutation of XHR response: ${xhr}`);
   }
 
-  async fetchPuzzleInput(date: YearDay, puzzleFile: string, puzzleFolder: string) {
+  async fetchPuzzleInput() {
     const responseTextExpression = `(function () {
         var el = document.getElementById("ab0ed957-70d7-4ea4-8dcb-5488ea950d1f");
         if (el) return el.payload;
@@ -127,7 +127,7 @@ class Crawler {
     const xhr = `(function () {
         document.puzzleInput = null;
         var x = new XMLHttpRequest();
-        x.open('GET', "https://adventofcode.com/${year}/day/${day}/input");
+        x.open('GET', "https://adventofcode.com/${this.date.year}/day/${this.date.day}/input");
         x.withCredentials = true;
         x.onload = (e) => {
           if (x.readyState === 4) {
@@ -150,24 +150,17 @@ class Crawler {
         x.send();
       }());`;
 
-    // Don't await possibly-
+    // Don't await possibly!
     await this.runtime.evaluate({ expression: xhr });
-    // @ts-ignore
     await loop({
-      asyncFunc: () => this.interceptXHR({
+      asyncFunc: () => this.interceptXhr({
         transactionStartedExpression: timestampExpression,
         responsePayloadExpression: responseTextExpression,
-        date,
-        puzzleFolder,
-        puzzleFile
       }),
       breakPredicate: (ok: any) => !!ok,
       sleep: 100,
       timeoutSeconds: 10,
       log: true
-    }
-    );
+    });
   }
-
 }
-

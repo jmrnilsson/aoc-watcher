@@ -5,6 +5,7 @@ import { spawn } from 'child_process';
 import Mustache from 'mustache';
 import { zfill } from './format';
 import { logger } from './log';
+import { InteropPart, PuzzlePart, YearDay } from '../types';
 
 
 // function _writeFile(fileName: string, content) {
@@ -26,6 +27,13 @@ import { logger } from './log';
 //   });
 // }
 
+type ForkChildProcessForSolveEvalArguments = {
+  date: YearDay; 
+  puzzlePart: PuzzlePart;
+  execPath: string;
+  module: string;
+}
+
 export async function writeFilePromise(folder: string, fileName: string, content: string): Promise<void> {
   if (!fs.existsSync(folder)) {
     logger.info(`Creating dir: ${folder}`);
@@ -41,12 +49,12 @@ export async function writeFilePromise(folder: string, fileName: string, content
   await fsp.writeFile(fullName, content)
 }
 
-export function fork_solve(year: number, day: number, flag: InteropPart, execPath: string, module: string): Promise<string>{
-  const flag_: InteropPart = flag || '-json1';
-  let args: string[] = [Mustache.render(module, {year: year, day: zfill(day, 2)}), flag_];
+export function forkChildProcessForSolveEval(params: ForkChildProcessForSolveEvalArguments): Promise<string>{
+  const flag: InteropPart = params.puzzlePart === 1 ? '-json1' : '-json2';
+  let args: string[] = [Mustache.render(params.module, {year: params.date.year, day: zfill(params.date.day, 2)}), flag];
  
   return new Promise((resolve, reject) => {
-    const cp = spawn(execPath, args);
+    const cp = spawn(params.execPath, args);
 
     let content: string = '';
     let error: string = '';
@@ -59,29 +67,3 @@ export function fork_solve(year: number, day: number, flag: InteropPart, execPat
     cp.on('exit', () => { error ? reject(error) : resolve(content); });
   });
 }
-
-// function _requestPromise(options) {
-//   return new Promise ((resolve, reject) => {
-//       const request = https.request(options, response => {
-//           var content = '';
-  
-//           response.on('data', function (chunk) {
-//               content += chunk;
-//           });
-          
-//           response.on('end', function () {
-//               resolve(content);
-//           });    
-//       });
-
-//       try {
-//           request.end();
-//       }
-//       catch(err){
-//           reject(err);
-//       }
-//   }); 
-// }
-
-// exports.fork_solve = _fork_solve;
-// exports.requestPromise = _requestPromise; Supported, but not needed since we need attached credentials.
