@@ -8,3 +8,4 @@ __pycache__
 _brave.ps1
 _*.ps1
 out
+coverage
