@@ -7,27 +7,7 @@ import { zfill } from './format';
 import { logger } from './log';
 import { InteropPart, PuzzlePart, YearDay } from '../types';
 
-
-// function _writeFile(fileName: string, content) {
-//   return new Promise((resolve, reject) => {
-//     fs.writeFile(fileName, content, "utf-8", (err, bytesWritten, _) => {
-//       if (err) reject(err);
-//       logger.info(`Writing file: ${fileName}.`);
-//       resolve();
-//     });
-//   });
-// }
-
-// function _truncate(fullName: string) {
-//   return new Promise((resolve, reject) => {
-//     fsp.truncate(fullName, 0, function (err) {
-//       if (err) reject(err);
-//       resolve();
-//     });
-//   });
-// }
-
-type ForkChildProcessForSolveEvalArguments = {
+export type ForkChildProcessForSolveEvalArguments = {
   date: YearDay; 
   puzzlePart: PuzzlePart;
   execPath: string;

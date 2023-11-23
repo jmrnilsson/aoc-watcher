@@ -2,8 +2,8 @@ import moment from 'moment';
 import {ProtocolProxyApi} from 'devtools-protocol/types/protocol-proxy-api'
 import CDP from 'chrome-remote-interface';
 import { logger } from './utils/log';
-import { forkChildProcessForSolveEval } from './utils/io';
-import { findJsonFromOutput, isNumeric } from './utils/format';
+import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
+import { findJsonFromOutput as tryParseJsonFromStandardOutput, isNumeric } from './utils/format';
 import { PuzzlePart, YearDay } from './types';
 
 type AutoResponderConstructorArguments = {
@@ -84,11 +84,11 @@ export class AutoResponder {
           await new Promise(resolve => setTimeout(resolve, sleep));
   
           try {
-              let output = await forkChildProcessForSolveEval(this.params);
-              const jsonOption = findJsonFromOutput(output);
+              let output = await forkChildProcessEval(this.params);
+              const maybeJson = tryParseJsonFromStandardOutput(output);
               
-              if (jsonOption){
-                  let {ok, puzzle, test} = jsonOption
+              if (maybeJson){
+                  let {ok, puzzle, test} = maybeJson
                   logger.info(`ok: ${ok} --- test: ${test} --- puzzle: ${puzzle}\n${output}`);
                   if (ok == true){
                       if (this.seen.has(puzzle)){
