@@ -5,7 +5,7 @@ import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
 import { PuzzlePart, YearDay } from './types';
 
-type AutoResponderConstructorArguments = {
+export type AutoResponderConstructorArguments = {
     runtime: ProtocolProxyApi.RuntimeApi;
     puzzlePart: PuzzlePart;
     date: YearDay;
@@ -102,7 +102,7 @@ export class AutoResponder {
                       }
                       const waitTime = moment.utc().diff(this.faultAt, 'seconds', true);
                       const sleep = Math.max(Math.min(respondMinimumWait - waitTime, respondMinimumWait * 0.1), 0);
-                      logger.info(`***** Will commit ${this.params.puzzlePart}: ${puzzle} after ${sleep}s. *****`);
+                      logger.info(`***** Will commit ${this.params.puzzlePart}: ${puzzle} in ${sleep}s. *****`);
                       await new Promise(resolve => setTimeout(resolve, sleep));
                       const success = await this.evalHtml(puzzle);
                       if (success) return puzzle;

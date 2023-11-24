@@ -7,10 +7,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug 2018-04",
+      "name": "Debug 2018-05",
       "program": "${workspaceFolder}/src/main.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "args": ["2018-04"],
+      "args": ["2018-05"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"]
     },
     {
