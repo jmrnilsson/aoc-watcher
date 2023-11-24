@@ -5,6 +5,7 @@ import { logger } from './utils/log';
 import { parseArgvToDate } from './utils/format';
 import { AdventBrowser } from './browser';
 import { AutoResponder } from './responder';
+import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
 
 async function start(argv: string[]) {
     dotenv.config();
@@ -19,8 +20,10 @@ async function start(argv: string[]) {
         throw new Error("Environment variables not set " + envVars)
     }
     const [execPath, module, puzzleFile, puzzleFolder] = envVars;
-    const responderArguments = {date, execPath, module};
     const client: CDP.Client = await attachChromeDevToolsProtocol();
+    // @ts-expect-error: can't cast as there some mismatch between the ProxyApi and DefinatelyTyped.
+    const runtime = client.Runtime as ProtocolProxyApi.RuntimeApi;
+    const autoResponderCtorArguments = {date, execPath, module, runtime };
 
     const browser = new AdventBrowser(client, date, puzzleFolder, puzzleFile);
     logger.info("Browser online");
@@ -35,14 +38,15 @@ async function start(argv: string[]) {
         process.exit();
     }
 
+
     if (await browser.IsSolved(1)) {
         logger.info("Part 1 already completed. Skipping part 1.");
     }
     else {
-        const part1Responder = new AutoResponder(client, {...responderArguments, puzzlePart: 1});
+        const part1Responder = new AutoResponder({...autoResponderCtorArguments, puzzlePart: 1});
         await part1Responder.start();
     }
-    const part2Responder = new AutoResponder(client, {...responderArguments, puzzlePart: 2});
+    const part2Responder = new AutoResponder({...autoResponderCtorArguments, puzzlePart: 2});
     await part2Responder.start();
 
     logger.info(`Done! Good job dudes and dudettes!`);

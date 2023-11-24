@@ -1,6 +1,5 @@
 import CDP from 'chrome-remote-interface';
 import { logger } from './log';
-import { AdventBrowser } from '../browser';
 import { AdventError } from '../types';
 
 

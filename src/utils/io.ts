@@ -31,7 +31,7 @@ export async function writeFile(folder: string, fileName: string, content: strin
 
 export function forkChildProcessForSolveEval(params: ForkChildProcessForSolveEvalArguments): Promise<string>{
   const flag: InteropPart = params.puzzlePart === 1 ? '-json1' : '-json2';
-  let args: string[] = [Mustache.render(params.module, {year: params.date.year, day: zfill(params.date.day, 2)}), flag];
+  const args: string[] = [Mustache.render(params.module, {year: params.date.year, day: zfill(params.date.day, 2)}), flag];
  
   return new Promise((resolve, reject) => {
     const cp = spawn(params.execPath, args);

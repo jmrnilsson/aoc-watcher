@@ -1,12 +1,12 @@
 import moment from 'moment';
 import {ProtocolProxyApi} from 'devtools-protocol/types/protocol-proxy-api'
-import CDP from 'chrome-remote-interface';
 import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
-import { findJsonFromOutput as tryParseJsonFromStandardOutput, isNumeric } from './utils/format';
+import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
 import { PuzzlePart, YearDay } from './types';
 
 type AutoResponderConstructorArguments = {
+    runtime: ProtocolProxyApi.RuntimeApi;
     puzzlePart: PuzzlePart;
     date: YearDay;
     execPath: string;
@@ -21,14 +21,13 @@ export class AutoResponder {
   private min: number;
   private faultAt: moment.Moment;
 
-  constructor(client: CDP.Client, params: AutoResponderConstructorArguments) {
-      // @ts-ignore
-      this.runtime = client.Runtime;
-      this.params = params;
-      this.seen = new Set<string>();
-      this.max = Infinity,
-      this.min = -Infinity;
-      this.faultAt = moment([2010, 1, 1]);
+  constructor(params: AutoResponderConstructorArguments) {
+    this.runtime = params.runtime;
+    this.params = params;
+    this.seen = new Set<string>();
+    this.max = Infinity,
+    this.min = -Infinity;
+    this.faultAt = moment([2010, 1, 1]);
   }
 
   private async evalHtml(answer: string) {
@@ -42,10 +41,8 @@ export class AutoResponder {
       const next = `document.querySelector("a[href*='part2']").click();`
       const p = await Runtime.evaluate({ expression: puzzleResponse });
       const {type, value} = p.result;
-      let correct = true;
       if (type == 'string'){
           if (value.includes("not the right answer")){
-              correct = false;
               this.seen.add(answer);
               this.faultAt = moment.utc();
               if (value.includes("answer is too high")){
@@ -84,11 +81,11 @@ export class AutoResponder {
           await new Promise(resolve => setTimeout(resolve, sleep));
   
           try {
-              let output = await forkChildProcessEval(this.params);
-              const maybeJson = tryParseJsonFromStandardOutput(output);
+              const output = await forkChildProcessEval(this.params);
+              const maybeJson = parseJsonFromStandardOutputOrNull(output);
               
               if (maybeJson){
-                  let {ok, puzzle, test} = maybeJson
+                  const {ok, puzzle} = maybeJson
                   logger.info(`\n${output}`);
                   if (ok == true){
                       if (this.seen.has(puzzle)){

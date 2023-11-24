@@ -6,10 +6,11 @@ import { writeFile } from './utils/io';
 import { zfill } from './utils/format';
 import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api'
 import { PuzzlePart, YearDay } from './types';
+import Protocol from 'devtools-protocol';
 
 type LoopArguments = {
-  asyncFunc: Function;
-  breakPredicate: Function;
+  asyncFunc: () => Promise<Protocol.Runtime.EvaluateResponse | boolean | undefined>;
+  breakPredicate: (anchor: any) => boolean;
   sleep: number;
   timeoutSeconds: number;
   log: boolean;
@@ -26,7 +27,7 @@ async function loop(params: LoopArguments) {
   while (moment.utc().diff(ts, 'seconds', true) < params.timeoutSeconds) {
     if (params.log) logger.info(`Long-polling wait time: ${params.sleep}ms`);
     await new Promise(resolve => setTimeout(resolve, params.sleep));
-    let result = await params.asyncFunc();
+    const result = await params.asyncFunc();
     if (params.breakPredicate(result)) break;
   }
 }
@@ -45,7 +46,7 @@ export class AdventBrowser {
   }
 
   private get runtime(): ProtocolProxyApi.RuntimeApi {
-    // @ts-ignore
+    // @ts-expect-error: can't cast as there some mismatch between the ProxyApi and DefinatelyTyped.
     return this.client.Runtime as ProtocolProxyApi.RuntimeApi;
   }
 
@@ -56,7 +57,7 @@ export class AdventBrowser {
   }
 
   async visitHome() {
-    let ready = new Promise(resolve => { this.client.on('ready', resolve) });
+    const ready = new Promise(resolve => { this.client.on('ready', resolve) });
     this.page.navigate({ url: `https://adventofcode.com/${this.date.year}` });
     return await ready;
   }
@@ -64,7 +65,7 @@ export class AdventBrowser {
   async longPollDailyUnlock() {
     const anchor = `document.querySelector('a[href="/${this.date.year}/day/${this.date.day}"]');`;
     const asyncFunc = () => this.runtime.evaluate({ expression: anchor });
-    const breakPredicate = (a: any) => a?.result?.className == "HTMLAnchorElement"
+    const breakPredicate = (anchor: any) => anchor?.result?.className == "HTMLAnchorElement"
     await loop({ asyncFunc, breakPredicate, sleep: 750, timeoutSeconds: 60 * 10, log: true });
   }
 
@@ -92,14 +93,14 @@ export class AdventBrowser {
   }
 
   private async interceptXhr(params: XhrInterceptionArguments) {
-    let timestamp = await this.runtime.evaluate({ expression: params.transactionStartedExpression });
+    const timestamp = await this.runtime.evaluate({ expression: params.transactionStartedExpression });
     if (timestamp?.result?.value && timestamp?.result?.type == 'string') {
       const { value } = timestamp.result;
       logger.info(`Transaction timestamp for begin of payload interception: ${value}`);
     }
     else return false;
 
-    let xhr = await this.runtime.evaluate({ expression: params.responsePayloadExpression });
+    const xhr = await this.runtime.evaluate({ expression: params.responsePayloadExpression });
     if (xhr && xhr.result && xhr.result.value && xhr.result.type == 'string') {
       const { type, value } = xhr.result;
       const content = value.concat("\n");  // New line is stripped from HTML tag attribute.
