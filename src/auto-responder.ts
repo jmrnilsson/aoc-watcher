@@ -173,17 +173,18 @@ export class AutoResponder {
     }
 
     async start() {
+        let success: boolean = false;
         const ts = moment.utc();
         const submitTimeoutSeconds = 60 * 60;  // 1h
         const sleepMilliseconds = 750;
-        while (moment.utc().diff(ts, 'seconds', true) < submitTimeoutSeconds && !this.complete) {
+        while (moment.utc().diff(ts, 'seconds', true) < submitTimeoutSeconds && !success) {
             await new Promise(resolve => setTimeout(resolve, sleepMilliseconds));
 
             try {
                 const standardOutput = await forkChildProcessEval(this.params);
                 const maybeJson = parseJsonFromStandardOutputOrNull(standardOutput);
                 if (maybeJson) {
-                    const success = await this.trySubmit(maybeJson, standardOutput);
+                    success = await this.trySubmit(maybeJson, standardOutput);
                     if (success) break;
                 }
             }
