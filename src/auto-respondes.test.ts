@@ -18,6 +18,8 @@ describe("AutoResponder", () => {
   // That's not the right answer; your answer is too high.  If you're stuck, make sure you're using the full input data; there are also some general tips on the <a href="/2018/about">about page</a>, or you can ask for hints on the <a href="https://www.reddit.com/r/adventofcode/" target="_blank">subreddit</a>.  Please wait one minute before trying again. <a href="/2018/day/22">[Return to Day 22]</a>
   // textContent: That's not the right answer; your answer is too high. If you're stuck, make sure you're using the full input data; there are also some general tips on the about page, or you can ask for hints on the subreddit. Please wait one minute before trying again. [Return to Day 22]
 
+  // That's the right answer! You are one gold star closer to fixing the sleigh. [Continue to Part Two]
+
   describe("Explain", () => {
     test("High and 1 mins", function () {
       let p = "That's not the right answer; your answer is too high. If you're stuck,";
