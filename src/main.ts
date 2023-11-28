@@ -44,8 +44,8 @@ async function start(argv: string[]) {
     else {
         const part1Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzlePart: 1 });
         await part1Responder.start();
+        browser.visitDay();
     }
-    browser.visitDay();
     const part2Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzlePart: 2 });
     await part2Responder.start();
 
