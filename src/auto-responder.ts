@@ -54,7 +54,7 @@ export class AutoResponder {
     private min: number;
     private previousFaultAt: moment.Moment;
     private waitSeconds: number = 0;
-    private complete: boolean = false;
+    // private complete: boolean = false;
 
     constructor(params: AutoResponderConstructorArguments) {
         this.navigator = new AutoResponderNavigator(params.runtime);
@@ -62,7 +62,7 @@ export class AutoResponder {
         this.seen = new Set<string>();
         this.max = Math.max(...params.seen, Infinity);
         this.min = Math.min(...params.seen, -Infinity);
-        this.previousFaultAt = params.previousFaultAt ?? moment([2010, 1, 1]);
+        this.previousFaultAt = params.previousFaultAt ?? moment().utc().add(-1, 'hours');
     }
 
     private skipByTriage(answer: string): boolean {
@@ -127,34 +127,35 @@ export class AutoResponder {
         return { explanation: "Unknown", waitSeconds: defaultWaitSeconds };
     }
 
-    private async trySubmit(maybeJson: any, output: string) {
+    private async trySubmit(maybeJson: any, output: string): Promise<boolean> {
         const minSecondsToWait = 31;
         const { ok, puzzle } = maybeJson;
         logger.info(`\n${output}`);
-        if (ok == true) {
-            const minUntil: Moment = this.previousFaultAt.add(minSecondsToWait, 'seconds');
-            const until: Moment = this.previousFaultAt.add(this.waitSeconds, 'seconds');
-            // const minWait = moment.utc().diff(_minWait, 'seconds', true);
-            // const toWait = moment.utc().diff(_toWait, 'seconds', true);
-            if (this.skipByTriage(puzzle)) return;
+        if (ok !== true) return false;
 
-            const minWaitMilliseconds: number = minUntil.diff(moment.utc());
-            const waitMilliseconds: number =  until.diff(moment.utc());
-            if (waitMilliseconds > 0 || minWaitMilliseconds > 0) {
-                const waitSeconds = Math.max(waitMilliseconds, minWaitMilliseconds) / 1000;
-                logger.info(`***** Will commit ${this.params.puzzlePart}: ${puzzle} in ${waitSeconds}s. *****`);
-                return;
-            }
+        const minUntil: Moment = this.previousFaultAt.add(minSecondsToWait, 'seconds');
+        const until: Moment = this.previousFaultAt.add(this.waitSeconds, 'seconds');
+        // const minWait = moment.utc().diff(_minWait, 'seconds', true);
+        // const toWait = moment.utc().diff(_toWait, 'seconds', true);
+        if (this.skipByTriage(puzzle)) return false;
 
-            await this.navigator.submit(puzzle);
-            const paragraph = await this.navigator.getResponseParagraph();
-            if (!paragraph) return;
-            const { waitSeconds, explanation } = this.explain(paragraph, puzzle);
-            this.waitSeconds = waitSeconds;
-            if (explanation === "Success") {
-                logger.info(`***** Success with part ${this.params.puzzlePart} *****`);
-                this.complete = true;
-                return;
+        const minWaitMilliseconds: number = minUntil.diff(moment.utc());
+        const waitMilliseconds: number =  until.diff(moment.utc());
+        if (waitMilliseconds > 0 || minWaitMilliseconds > 0) {
+            const waitSeconds = Math.max(waitMilliseconds, minWaitMilliseconds) / 1000;
+            logger.info(`***** Will commit ${this.params.puzzlePart}: ${puzzle} in ${waitSeconds}s. *****`);
+            return false;
+        }
+
+        await this.navigator.submit(puzzle);
+        const paragraph = await this.navigator.getResponseParagraph();
+        if (!paragraph) return false;
+        const { waitSeconds, explanation } = this.explain(paragraph, puzzle);
+        this.waitSeconds = waitSeconds;
+        if (explanation === "Success") {
+            logger.info(`***** Success with part ${this.params.puzzlePart} *****`);
+            // this.complete = true;
+            return true;
 
 // '                if (this.params.puzzlePart === 1) {
 //                     this.navigator.returnToDay(this.params.date);
@@ -162,14 +163,13 @@ export class AutoResponder {
 //                     this.complete = true;
 //                     return;
 //                 }
-            }
-            // if (paragraph) {
-            //     const success = await this.navigator.tryProgressFrom(this.params.puzzlePart, paragraph);
-            //     if (success) return;
-            // }
 
-
+        // if (paragraph) {
+        //     const success = await this.navigator.tryProgressFrom(this.params.puzzlePart, paragraph);
+        //     if (success) return;
+        // }
         }
+        return false;
     }
 
     async start() {
@@ -182,7 +182,10 @@ export class AutoResponder {
             try {
                 const standardOutput = await forkChildProcessEval(this.params);
                 const maybeJson = parseJsonFromStandardOutputOrNull(standardOutput);
-                if (maybeJson) this.trySubmit(maybeJson, standardOutput);
+                if (maybeJson) {
+                    const success = await this.trySubmit(maybeJson, standardOutput);
+                    if (success) break;
+                }
             }
             catch (err: any) {
                 logger.error(`Eval error: ${err}`);
