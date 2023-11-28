@@ -130,8 +130,6 @@ export class AutoResponder {
 
         const minUntil: Moment = this.previousFaultAt.add(minSecondsToWait, 'seconds');
         const until: Moment = this.previousFaultAt.add(this.waitSeconds, 'seconds');
-        // const minWait = moment.utc().diff(_minWait, 'seconds', true);
-        // const toWait = moment.utc().diff(_toWait, 'seconds', true);
         if (this.skipByTriage(puzzle)) return false;
 
         const minWaitMilliseconds: number = minUntil.diff(moment.utc());

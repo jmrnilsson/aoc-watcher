@@ -1,27 +1,13 @@
-import { describe, expect, test} from '@jest/globals'
+import { describe, test} from '@jest/globals'
 import { start } from './main';
-import Protocol from 'devtools-protocol';
-// import * from ''
-// import { attachChromeDevToolsProtocol } from './utils/protocol';
-
-// jest.mock('./utils/protocol', () => {
-//   attachChromeDevToolsProtocol: () => jest.fn()
-// });
 
 jest.mock('./utils/protocol', jest.fn().mockImplementation(() => {
   const clientMock = jest.fn().mockImplementation(() => {
     return {Runtime: jest.fn()}
   });
-  // clientMock.Runtime = jest.fn()
   return {attachChromeDevToolsProtocol: () => clientMock}
 }));
 
-// protocol.mockImplementation(() => {
-  //   return {
-  //     visitHome: () => new Promise(resolve => setImmediate(resolve))
-  //   };
-  //   // return {visitHome: (): Promise<unknown> => setImmediate() )};
-  // });
 
 describe("Main.start", function () {
   let originalProcessEnv: any;

@@ -1,3 +1,5 @@
 import { start } from "./main";
 
-start(process.argv);
+if (require.main === module) {
+  start(process.argv);
+}

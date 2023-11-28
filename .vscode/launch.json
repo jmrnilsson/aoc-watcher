@@ -28,10 +28,7 @@
       "request": "launch",
       "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/jest",
       "args": [
-          // "${fileBasenameNoExtension}",
           "--runInBand",
-          // "--watch",
-          // "--coverage=false",
           "--no-cache",
           "--",
           "main"
