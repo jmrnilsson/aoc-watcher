@@ -11,8 +11,7 @@ describe("AutoResponder", () => {
     date: { year: 2018, day: 5 },
     execPath: "",
     module: "",
-    max: null,
-    min: null,
+    seen: [],
     previousFaultAt: null
   };
 

@@ -16,7 +16,7 @@ async function start(argv: string[]) {
     const runtime = client.Runtime as ProtocolProxyApi.RuntimeApi;
     const vars = getEnvs();
     const history = await readHistory();
-    const { seen, previousFaultAt } = history[`${date.year}-${date.day}`];
+    const { seen, previousFaultAt } = history[`${date.year}-${date.day}`] ?? { seen: [], previousFaultAt: null };
     const autoResponderCtorArguments = {
         date,
         execPath: vars.execPath,
@@ -45,6 +45,7 @@ async function start(argv: string[]) {
         const part1Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzlePart: 1 });
         await part1Responder.start();
     }
+    browser.visitDay();
     const part2Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzlePart: 2 });
     await part2Responder.start();
 

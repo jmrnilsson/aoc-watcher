@@ -72,6 +72,12 @@ export class AdventBrowser {
         return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
     }
 
+    // async returnToDay(date: YearDay): Promise<void> {
+    //     const { year, day } = date;
+    //     const returnToDay = `document.querySelector('a[href="/${year}/day/${day}]').click();`;
+    //     await this.runtime.evaluate({ expression: returnToDay });
+    // }
+
     private async interceptXhr(params: XhrInterceptionArguments) {
         const timestamp = await this.runtime.evaluate({ expression: params.transactionStartedExpression });
         if (timestamp?.result?.value && timestamp?.result?.type == 'string') {
