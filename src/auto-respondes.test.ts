@@ -1,13 +1,12 @@
 import { describe, expect, test} from '@jest/globals'
 import { AutoResponder } from './auto-responder';
 import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
-import { PuzzlePart } from './types';
+import { Puzzle } from './puzzle';
 
 describe("AutoResponder", () => {
-  const puzzlePart: PuzzlePart = 1;
   const ctorArgs = {
     runtime: jest.fn() as unknown as ProtocolProxyApi.RuntimeApi,
-    puzzlePart: puzzlePart,
+    puzzle: Puzzle.part1(),
     date: { year: 2018, day: 5 },
     execPath: "",
     module: "",

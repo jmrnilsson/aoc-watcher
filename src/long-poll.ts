@@ -1,15 +1,7 @@
-import Protocol from 'devtools-protocol';
 import moment from 'moment';
 import { logger } from './utils/log';
+import { LongPollArguments } from './types';
 
-
-export type LongPollArguments = {
-  fn: () => Promise<Protocol.Runtime.EvaluateResponse | boolean | undefined>;
-  breakPredicate: (anchor: any) => boolean;
-  sleep: number;
-  timeoutSeconds: number;
-  log: boolean;
-}
 
 export async function longPoll(params: LongPollArguments) {
   params.log ??= false;

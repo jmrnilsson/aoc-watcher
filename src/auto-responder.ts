@@ -1,20 +1,9 @@
 import moment, { Moment } from 'moment';
-import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api'
 import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
-import { PuzzlePart, YearDay } from './types';
 import AutoResponderNavigator from './auto-responder-navigator';
-
-export type AutoResponderConstructorArguments = {
-    runtime: ProtocolProxyApi.RuntimeApi;
-    puzzlePart: PuzzlePart;
-    date: YearDay;
-    execPath: string;
-    module: string;
-    seen: number[];
-    previousFaultAt: moment.Moment | null;
-}
+import { AutoResponderConstructorArguments } from './types';
 
 type Explanation = "High" | "Low" | "Unknown" | "Success";
 
@@ -43,7 +32,14 @@ enum Numbers {
     Seventeen = 17,
     Eighteen = 18,
     Nineteen = 19,
-    Twenty = 20
+    Twenty = 20,
+    Thirty = 30,
+    Fourty = 40,
+    Fifty = 50,
+    Sixty = 60,
+    Seventy = 70,
+    Eighty = 80,
+    Ninety = 90
 }
 
 export class AutoResponder {
@@ -54,7 +50,6 @@ export class AutoResponder {
     private min: number;
     private previousFaultAt: moment.Moment;
     private waitSeconds: number = 0;
-    // private complete: boolean = false;
 
     constructor(params: AutoResponderConstructorArguments) {
         this.navigator = new AutoResponderNavigator(params.runtime);
@@ -143,7 +138,7 @@ export class AutoResponder {
         const waitMilliseconds: number =  until.diff(moment.utc());
         if (waitMilliseconds > 0 || minWaitMilliseconds > 0) {
             const waitSeconds = Math.max(waitMilliseconds, minWaitMilliseconds) / 1000;
-            logger.info(`***** Will commit ${this.params.puzzlePart}: ${puzzle} in ${waitSeconds}s. *****`);
+            logger.info(`***** Will commit ${this.params.puzzle.part}: ${puzzle} in ${waitSeconds}s. *****`);
             return false;
         }
 
@@ -153,21 +148,8 @@ export class AutoResponder {
         const { waitSeconds, explanation } = this.explain(paragraph, puzzle);
         this.waitSeconds = waitSeconds;
         if (explanation === "Success") {
-            logger.info(`***** Success with part ${this.params.puzzlePart} *****`);
-            // this.complete = true;
+            logger.info(`***** Success with part ${this.params.puzzle.part} *****`);
             return true;
-
-// '                if (this.params.puzzlePart === 1) {
-//                     this.navigator.returnToDay(this.params.date);
-//                 } else {
-//                     this.complete = true;
-//                     return;
-//                 }
-
-        // if (paragraph) {
-        //     const success = await this.navigator.tryProgressFrom(this.params.puzzlePart, paragraph);
-        //     if (success) return;
-        // }
         }
         return false;
     }

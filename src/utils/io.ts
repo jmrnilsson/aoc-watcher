@@ -5,29 +5,11 @@ import { spawn } from 'child_process';
 import Mustache from 'mustache';
 import { zfill } from './format';
 import { logger } from './log';
-import { InteropPart, PuzzlePart, YearDay } from '../types';
+import { AdventHistory, AdventHistoryFile, ForkChildProcessForSolveEvalArguments } from '../types';
 import moment from 'moment';
 
 
 const _CONFIG_PATH: string = ".aoc-watcher-storage.json";
-
-export type ForkChildProcessForSolveEvalArguments = {
-    date: YearDay;
-    puzzlePart: PuzzlePart;
-    execPath: string;
-    module: string;
-}
-
-type AdventHistoryFile = Record<string, {
-    seen: number[];
-    previousFaultAtTimestamp: number
-}>;
-
-export type AdventHistory = Record<string, {
-    seen: number[];
-    previousFaultAt: moment.Moment
-}>;
-
 
 export async function readHistory(): Promise<AdventHistory> {
     if (!fs.existsSync(_CONFIG_PATH)) return {};
@@ -65,8 +47,13 @@ export async function writeFile(folder: string, fileName: string, content: strin
 }
 
 export function forkChildProcessForSolveEval(params: ForkChildProcessForSolveEvalArguments): Promise<string> {
-    const flag: InteropPart = params.puzzlePart === 1 ? '-json1' : '-json2';
-    const args: string[] = [Mustache.render(params.module, { year: params.date.year, day: zfill(params.date.day, 2) }), flag];
+    const args: string[] = [
+        Mustache.render(params.module, {
+            year: params.date.year,
+            day: zfill(params.date.day, 2)
+        }),
+        params.puzzle.jsonSuffix
+    ];
 
     return new Promise((resolve, reject) => {
         const cp = spawn(params.execPath, args);

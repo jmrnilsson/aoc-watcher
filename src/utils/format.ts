@@ -1,13 +1,6 @@
 import fs from 'fs';
 import moment from 'moment';
-import { YearDay, AdventError } from '../types';
-
-export type AdventVariables = {
-  execPath: string;
-  module: string;
-  puzzleFile: string;
-  puzzleFolder: string;
-}
+import { AdventError, AdventVariables, YearDay } from '../types';
 
 export function zfill(digits: number, n: number) {
   if (n > 7) throw new AdventError(`Larger zero fills not supported (n=${n})`);
@@ -47,7 +40,6 @@ export function parseJsonFromStandardOutputOrNull(output: string) {
   const match = re.exec(output);
   return match ? JSON.parse(match[0]) : null;
 }
-
 
 export function isNumeric(value: string, allowSeparator: boolean = false) {
   const pattern = allowSeparator ? /^(\d\.,)+$/ : /^\d+$/;

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsc && node out/main.js",
     "test": "jest",
-    "lint": "npx tsc && npx eslint ./src/"
+    "lint": "npx tsc && npx eslint ./src/",
+    "build": "npx tsc"
   },
   "author": "Martin Nilsson",
   "license": "MIT",
