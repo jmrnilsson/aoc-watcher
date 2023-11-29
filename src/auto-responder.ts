@@ -56,17 +56,21 @@ export class AutoResponder {
     constructor(params: AutoResponderConstructorArguments) {
         this.navigator = new AutoResponderNavigator(params.runtime, params.date);
         this.params = params;
-        this.seen = new Set<string>();
         // this.seen.add("69643")
         // this.seen.add("3")
 
         this.fileAccess = params.fileAccess;
         const metrics = this.fileAccess.find(params.puzzle, params.date);
+        this.seen = metrics.seen;
         this.max = metrics.max;
         // this.max = 69643;
         this.min = metrics.min;
         // this.min = 8;
         this.previousFaultAt = metrics.previousFaultAt;
+        
+        for(const s of metrics.seen) {
+            this.seen.add(s);
+        }
     }
 
 
@@ -159,11 +163,13 @@ export class AutoResponder {
         const until: Moment = this.previousFaultAt.add(this.waitSeconds, 'seconds');
         if (this.skipByTriage(puzzle)) return false;
 
-        const minWait: number = minUntil.diff(moment.utc(), 'seconds');
-        const wait: number =  until.diff(moment.utc(), 'seconds');
-        if (wait < 0 && minWait < 0) {
-            const waitSeconds = Math.min(wait, minWait);
-            logger.info(`***** Will commit part ${this.params.puzzle.part}: ${puzzle} in ${waitSeconds}m. *****`);
+        // const minWait: number = minUntil.diff(moment.utc(), 'seconds');
+        // const wait: number =  until.diff(moment.utc(), 'seconds');
+        // if (wait < 0 && minWait < 0) {
+        if (moment.utc() > minUntil && moment.utc() > until) {
+            // const waitSeconds = Math.min(wait, minWait);
+            // logger.info(`***** Will commit part ${this.params.puzzle.part}: ${puzzle} in ${waitSeconds}m. *****`);
+            logger.info(`***** Will commit part ${this.params.puzzle.part}: ${puzzle}. *****`);
             return false;
         }
 
