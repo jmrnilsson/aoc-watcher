@@ -1,12 +1,15 @@
 import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api';
+import { YearDay } from './types';
 // import { PuzzlePart, YearDay } from './types';
 
 
 export default class AutoResponderNavigator {
     private readonly runtime: ProtocolProxyApi.RuntimeApi;
+    private readonly date: YearDay;
 
-    constructor(runtime: ProtocolProxyApi.RuntimeApi) {
+    constructor(runtime: ProtocolProxyApi.RuntimeApi, date: YearDay) {
         this.runtime = runtime;
+        this.date = date;
     }
 
     async submit(answer: string): Promise<void> {
@@ -16,20 +19,17 @@ export default class AutoResponderNavigator {
         await this.runtime.evaluate({ expression: submit });
     }
 
-    // private async tryProgressFromPart1(): Promise<boolean> {
-    //     const hasNext = `document.querySelector("a[href*='part2']");`;
-    //     const next = `document.querySelector("a[href*='part2']").click();`;
-    //     if (await this.runtime.evaluate({ expression: hasNext })) {
-    //         await this.runtime.evaluate({ expression: next });
-    //         return true;
-    //     }
-    //     return false;
-    // }
-
-    // async tryProgressFrom(puzzlePart: PuzzlePart, paragraph: string): Promise<boolean> {
-    //     if (puzzlePart === 1) return this.tryProgressFromPart1();
-    //     return this.tryProgressFromPart2(paragraph);
-    // }
+    // <a href="/2016/day/2">[Return to Day 2]</a>
+    // <a href="/2016/day/2">[Return to Day 2]</a>
+    async returnToDay(): Promise<void> {
+        // Skip this part to avoid spamming
+        // await new Promise(resolve => setImmediate(resolve));
+        
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        const { year, day } = this.date;
+        const returnToDay = `document.querySelector('a[href="/${year}/day/${day}"]').click();`;
+        await this.runtime.evaluate({ expression: returnToDay });
+    }
 
     async getResponseParagraph(): Promise<string | null> {
         const puzzleResponse = 'document.querySelector("p").textContent;';

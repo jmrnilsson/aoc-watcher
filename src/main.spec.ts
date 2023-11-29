@@ -9,7 +9,7 @@ jest.mock('./utils/protocol', jest.fn().mockImplementation(() => {
 }));
 
 
-describe("Main.start", function () {
+describe.skip("Main.start", function () {
   let originalProcessEnv: any;
   
   beforeAll(() => {

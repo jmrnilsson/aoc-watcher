@@ -8,7 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Debug 2018-09",
-      "program": "${workspaceFolder}/src/main.ts",
+      "program": "${workspaceFolder}/src/index.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
       "args": ["2018-09"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"]
@@ -16,10 +16,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug 2016-01",
-      "program": "${workspaceFolder}/src/main.ts",
+      "name": "Debug 2016-02",
+      "program": "${workspaceFolder}/src/index.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "args": ["2016-01"],
+      "args": ["2016-02"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"]
     },
     {
@@ -40,17 +40,6 @@
       "windows": {
           "program": "${workspaceFolder}/node_modules/jest/bin/jest"
       }
-  },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Launch application",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/main.js",
-      "args": ["2018-02"],
-      "envFile": "${workspaceFolder}/.env"
-    }
+  }
   ]
 }

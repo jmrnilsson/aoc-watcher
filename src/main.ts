@@ -6,8 +6,9 @@ import { getEnvs, parseArgvToDate } from './utils/format';
 import { AdventBrowser } from './browser';
 import { AutoResponder } from './auto-responder';
 import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
-import { readHistory } from './utils/io';
+import AdventHistoryFile from './utils/advent-history-file';
 import { Puzzle } from './puzzle';
+
 
 export async function start(argv: string[]) {
     dotenv.config();
@@ -16,16 +17,10 @@ export async function start(argv: string[]) {
     // @ts-expect-error: can't cast as there some mismatch between the ProxyApi and DefinatelyTyped.
     const runtime = client.Runtime as ProtocolProxyApi.RuntimeApi;
     const vars = getEnvs();
-    const history = await readHistory();
-    const { seen, previousFaultAt } = history[`${date.year}-${date.day}`] ?? { seen: [], previousFaultAt: null };
-    const autoResponderCtorArguments = {
-        date,
-        execPath: vars.execPath,
-        module: vars.module,
-        runtime,
-        seen,
-        previousFaultAt
-    };
+    const fileAccess = new AdventHistoryFile();
+    await fileAccess.initialize();
+    await fileAccess.save(null);
+    const autoResponderCtorArguments = { date, execPath: vars.execPath, module: vars.module, runtime, fileAccess };
 
     const browser = new AdventBrowser(client, date, vars.puzzleFolder, vars.puzzleFile);
     logger.info("Browser online.");

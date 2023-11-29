@@ -23,7 +23,7 @@ export class Puzzle {
     return this._jsonSuffix;
   }
 
-  public is(partNumber: 1 | 2): boolean {
+  public is(partNumber: number): boolean {
     return this.part === partNumber;
   }
 }

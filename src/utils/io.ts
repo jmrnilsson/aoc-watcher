@@ -5,31 +5,9 @@ import { spawn } from 'child_process';
 import Mustache from 'mustache';
 import { zfill } from './format';
 import { logger } from './log';
-import { AdventHistory, AdventHistoryFile, ForkChildProcessForSolveEvalArguments } from '../types';
-import moment from 'moment';
+import { ForkChildProcessForSolveEvalArguments } from '../types';
 
-
-const _CONFIG_PATH: string = ".aoc-watcher-storage.json";
-
-export async function readHistory(): Promise<AdventHistory> {
-    if (!fs.existsSync(_CONFIG_PATH)) return {};
-    const data: AdventHistoryFile = JSON.parse((await fsp.readFile(_CONFIG_PATH, 'utf-8')).toString());
-    const adventHistory: AdventHistory = {};
-    for (const [yearDay, value] of Object.entries(data)) {
-        const {previousFaultAtTimestamp, ...rest} = value as any;
-        data[yearDay] = { ...rest, previousFaultAt: moment(previousFaultAtTimestamp) }
-    }
-    return adventHistory;
-}
-
-export async function writeHistory(adventHistory: AdventHistory): Promise<void> {
-    const data: AdventHistoryFile = {};
-    for (const [yearDay, value] of Object.entries(adventHistory)) {
-        const {previousFaultAt, ...rest} = value;
-        data[yearDay] = { ...rest, previousFaultAtTimestamp: previousFaultAt.unix() }
-    }
-    return await fsp.writeFile(_CONFIG_PATH, JSON.stringify(data, null, 2), {mode: 'utf-8'});
-}
+export const _CONFIG_PATH: string = ".aoc-watcher-storage.json";
 
 export async function writeFile(folder: string, fileName: string, content: string): Promise<void> {
     if (!fs.existsSync(folder)) {

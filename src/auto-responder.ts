@@ -1,15 +1,16 @@
 import moment, { Moment } from 'moment';
 import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
+import AdventHistoryFile from './utils/advent-history-file';
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
 import AutoResponderNavigator from './auto-responder-navigator';
-import { AutoResponderConstructorArguments } from './types';
+import {  AutoResponderConstructorArguments, Explanation } from './types';
 
-type Explanation = "High" | "Low" | "Unknown" | "Success";
 
 type SubmissionExplanation = {
     waitSeconds: number;
     explanation: Explanation;
+    at: number;
 }
 
 enum Numbers {
@@ -50,37 +51,56 @@ export class AutoResponder {
     private min: number;
     private previousFaultAt: moment.Moment;
     private waitSeconds: number = 0;
+    private fileAccess: AdventHistoryFile;
 
     constructor(params: AutoResponderConstructorArguments) {
-        this.navigator = new AutoResponderNavigator(params.runtime);
+        this.navigator = new AutoResponderNavigator(params.runtime, params.date);
         this.params = params;
         this.seen = new Set<string>();
-        this.max = Math.max(...params.seen, Infinity);
-        this.min = Math.min(...params.seen, -Infinity);
-        this.previousFaultAt = params.previousFaultAt ?? moment().utc().add(-1, 'hours');
+        // this.seen.add("69643")
+        // this.seen.add("3")
+
+        this.fileAccess = params.fileAccess;
+        const metrics = this.fileAccess.find(params.puzzle, params.date);
+        this.max = metrics.max;
+        // this.max = 69643;
+        this.min = metrics.min;
+        // this.min = 8;
+        this.previousFaultAt = metrics.previousFaultAt;
     }
 
+
+
     private skipByTriage(answer: string): boolean {
-        if (this.seen.has(answer)) {
-            logger.info(`***** Triage: Already seen ${answer}! *****`);
-            return true;
-        }
         if (isNumeric(answer)) {
             const answer_ = Number(answer);
             if (answer_ <= this.min) {
-                logger.info(`***** Triage: ${answer} is too low! *****`);
+                logger.info(`***** Triage: ${answer} is too low! Min: ${this.min } *****`);
                 return true
             }
             if (answer_ >= this.max) {
-                logger.info(`***** Triage: ${answer} is too high! *****`);
+                logger.info(`***** Triage: ${answer} is too high! Max: ${ this.max } *****`);
                 return true
             }
         }
+        if (this.seen.has(answer)) {
+            logger.info(`***** Triage: Already tried ${answer}! *****`);
+            return true;
+        }
+        logger.info(`***** Triage: OK, promoting ${answer}! *****`);
         return false;
     }
 
     private pleaseWaitSeconds(paragraph: string, defaultWaitSeconds: number): number {
-        const matches = /Please wait (?<amount>\w+) (?<unit>\w+) before trying again/.exec(paragraph);
+        {
+            const matches = /[Yy]ou have (?<minutes>\w+)m (?<seconds>\w+)s left to wait/.exec(paragraph);
+            const minutes = matches?.groups?.minutes;
+            const seconds = matches?.groups?.seconds;
+
+            if (minutes && seconds) return Number(minutes) * 60 + Number(seconds);
+        }
+
+        const matches = /[Pp]lease wait (?<amount>\w+) (?<unit>\w+) before trying again/.exec(paragraph);
         const amount = matches?.groups?.amount;
         const unit = matches?.groups?.unit;
 
@@ -89,9 +109,13 @@ export class AutoResponder {
             if (/second/.test(unit)) k = 1;
             if (/hour/.test(unit)) k = 60 * 60;
 
-            const amountInvariant: string = amount.slice(0, 1).toUpperCase() + amount.slice(1).toLowerCase();
-            const amountNumber: Numbers = Numbers[amountInvariant as keyof typeof Numbers]
-            const amountValue: number = amountNumber.valueOf()
+            let amountValue: null | number = null;
+            if (/\d+/.test(amount)) amountValue = Number(amount);
+            else {
+                const amountInvariant: string = amount.slice(0, 1).toUpperCase() + amount.slice(1).toLowerCase();
+                const amountNumber: Numbers = Numbers[amountInvariant as keyof typeof Numbers]
+                amountValue = amountNumber.valueOf()                    
+            }
             return amountValue * k;
         }
         logger.error("Unknown unit. Amount: %s, Unit: %s", amount, unit);
@@ -100,26 +124,29 @@ export class AutoResponder {
 
     // Public for unit testing purposes.
     public explain(paragraph: string, answer: string): SubmissionExplanation {
-        const defaultWaitSeconds: number = 120;
-        if (paragraph.includes("not the right answer")) {
+        const at: moment.Moment = moment.utc();
+        let waitSeconds: number = 120;
+        if (/not the right answer|[Yy]ou gave an answer too recently/.test(paragraph)) {
             this.seen.add(answer);
-            this.previousFaultAt = moment.utc();
-            const waitSeconds = this.pleaseWaitSeconds(paragraph, defaultWaitSeconds);
+            this.previousFaultAt = at;
+
+            waitSeconds = this.pleaseWaitSeconds(paragraph, waitSeconds);
 
             if (isNumeric(answer)) {
                 if (paragraph.includes("answer is too high")) {
                     this.max = Math.max(Number(answer), this.max);
-                    return { explanation: "High", waitSeconds };
+                    return { explanation: "High", waitSeconds, at: at.unix() };
                 }
                 else if (paragraph.includes("answer is too low")) {
                     this.min = Math.min(Number(answer), this.min);
-                    return { explanation: "Low", waitSeconds };
+                    return { explanation: "Low", waitSeconds, at: at.unix() };
                 }
             }
+
         } else if (/(That's the right answer|You've finished every puzzle)/i.test(paragraph)) {
-            return { explanation: "Success", waitSeconds: 0 };
+            return { explanation: "Success", waitSeconds: 0, at: at.unix() };
         }
-        return { explanation: "Unknown", waitSeconds: defaultWaitSeconds };
+        return { explanation: "Unknown", waitSeconds, at: at.unix() };
     }
 
     private async trySubmit(maybeJson: any, output: string): Promise<boolean> {
@@ -132,23 +159,32 @@ export class AutoResponder {
         const until: Moment = this.previousFaultAt.add(this.waitSeconds, 'seconds');
         if (this.skipByTriage(puzzle)) return false;
 
-        const minWaitMilliseconds: number = minUntil.diff(moment.utc());
-        const waitMilliseconds: number =  until.diff(moment.utc());
-        if (waitMilliseconds > 0 || minWaitMilliseconds > 0) {
-            const waitSeconds = Math.max(waitMilliseconds, minWaitMilliseconds) / 1000;
-            logger.info(`***** Will commit ${this.params.puzzle.part}: ${puzzle} in ${waitSeconds}s. *****`);
+        const minWait: number = minUntil.diff(moment.utc(), 'seconds');
+        const wait: number =  until.diff(moment.utc(), 'seconds');
+        if (wait < 0 && minWait < 0) {
+            const waitSeconds = Math.min(wait, minWait);
+            logger.info(`***** Will commit part ${this.params.puzzle.part}: ${puzzle} in ${waitSeconds}m. *****`);
             return false;
         }
 
         await this.navigator.submit(puzzle);
         const paragraph = await this.navigator.getResponseParagraph();
         if (!paragraph) return false;
-        const { waitSeconds, explanation } = this.explain(paragraph, puzzle);
+        const { waitSeconds, explanation, at } = this.explain(paragraph, puzzle);
+        await this.fileAccess.save({
+            at,
+            year: this.params.date.year,
+            day: this.params.date.day,
+            part: this.params.puzzle.part,
+            explanation,
+            value: puzzle
+        });
         this.waitSeconds = waitSeconds;
         if (explanation === "Success") {
             logger.info(`***** Success with part ${this.params.puzzle.part} *****`);
             return true;
         }
+        await this.navigator.returnToDay();
         return false;
     }
 

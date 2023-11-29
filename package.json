@@ -6,7 +6,7 @@
   "scripts": {
     "prestart": "npx tsc",
     "start": "node out/index.js",
-    "test": "jest",
+    "test": "npx jest ./src",
     "lint": "npx tsc && npx eslint ./src/",
     "build": "npx tsc"
   },
