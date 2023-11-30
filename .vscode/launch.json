@@ -16,10 +16,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug 2016-02",
+      "name": "Debug 2016-03",
       "program": "${workspaceFolder}/src/index.ts",
       "preLaunchTask": "tsc: build - tsconfig.json",
-      "args": ["2016-02"],
+      "args": ["2016-03"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"]
     },
     {

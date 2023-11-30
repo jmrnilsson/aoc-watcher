@@ -2,7 +2,7 @@ import { hrtime } from 'node:process';
 import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
-import AutoResponderBrowser from './auto-responder-browser';
+import { AdventBrowser } from './browser';
 import { AdventError, AutoResponderConstructorArguments, Explanation } from './types';
 
 
@@ -85,7 +85,7 @@ export function pleaseWaitSeconds(paragraph: string, defaultWaitSeconds: number)
 }
 
 export class AutoResponder {
-    private readonly browser: AutoResponderBrowser;
+    private readonly browser: AdventBrowser;
     private readonly params: AutoResponderConstructorArguments;
     private readonly seen: Set<string> = new Set<string>();
     private max: number = Infinity
@@ -93,8 +93,8 @@ export class AutoResponder {
     private lastSubmissionAt: bigint  = hrtime.bigint() - (1_000_000_000n * 60n * 60n);
     private lastPleaseWaitSeconds: bigint = 0n;
 
-    constructor(params: AutoResponderConstructorArguments) {
-        this.browser = new AutoResponderBrowser(params.runtime, params.date);
+    constructor(params: AutoResponderConstructorArguments, browser: AdventBrowser) {
+        this.browser = browser;
         this.params = params;
     }
 
@@ -113,12 +113,12 @@ export class AutoResponder {
         if (isNumeric(answer)) {
             const answer_ = Number(answer);
 
-            if (answer_ <= this.min) {
+            if (Math.abs(this.min) !== Infinity && answer_ <= this.min) {
                 logger.info(`***** Triage: ${answer} is too low! Min: ${this.min}${waitMsg} *****`);
                 return true
             }
 
-            if (answer_ >= this.max) {
+            if (Math.abs(this.min) !== Infinity && answer_ >= this.max) {
                 logger.info(`***** Triage: ${answer} is too high! Max: ${this.max}${waitMsg} *****`);
                 return true
             }
@@ -138,6 +138,19 @@ export class AutoResponder {
         return false;
     }
 
+    private async actBy(explanation: Explanation, puzzle: string, paragraph: string): Promise<boolean> {
+        if (explanation === Explanation.Success) {
+            logger.info(`***** Success with part ${this.params.puzzle.part} *****`);
+            await this.browser.returnForPart2();
+            return true;
+        }
+        if (explanation === Explanation.High) this.max = Math.min(Number(puzzle), this.max);
+        if (explanation === Explanation.Low) this.min = Math.max(Number(puzzle), this.min);
+        await this.browser.returnToDay();
+        this.lastPleaseWaitSeconds = BigInt(pleaseWaitSeconds(paragraph, 180));
+        return false;
+    }
+
     private async submit(maybeJson: any, output: string): Promise<boolean> {
         const { ok, puzzle } = maybeJson;
         logger.info(`\n${output}`);
@@ -153,23 +166,7 @@ export class AutoResponder {
         if (!paragraph) return false;
         this.seen.add(puzzle);
         const explanation = explain(paragraph, puzzle);
-
-        switch (explanation) {
-            case Explanation.Success:
-                logger.info(`***** Success with part ${this.params.puzzle.part} *****`);
-                await this.browser.returnToDay({noop: false});
-                return true;
-            case Explanation.High: this.max = Math.max(Number(puzzle), this.max);
-            case Explanation.Low: this.min = Math.min(Number(puzzle), this.min);
-            case Explanation.Unknown:
-                await this.browser.returnToDay({noop: true});
-                this.lastPleaseWaitSeconds = BigInt(pleaseWaitSeconds(paragraph, 180));
-                break;
-            default:
-                throw new AdventError(`Enumeration of explanation: ${explanation} not possible!`);
-        }
-
-        return false;
+        return this.actBy(explanation, puzzle, paragraph);
     }
 
     async start() {

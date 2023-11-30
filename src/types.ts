@@ -1,7 +1,5 @@
 import Protocol from "devtools-protocol";
 import { Puzzle } from "./puzzle";
-import ProtocolProxyApi from "devtools-protocol/types/protocol-proxy-api";
-
 
 export type AdventVariables = {
   execPath: string;
@@ -45,7 +43,6 @@ export type LongPollArguments = {
 }
 
 export type AutoResponderConstructorArguments = {
-  runtime: ProtocolProxyApi.RuntimeApi;
   puzzle: Puzzle;
   date: YearDay;
   execPath: string;

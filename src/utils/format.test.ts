@@ -57,7 +57,8 @@ describe("isNumeric", function () {
     [" 1", false],
     ["0912039", true],
     ["091a2039", false],
-    ["Paretis", false]
+    ["Paretis", false],
+    ["1902", true]
   ];
 
   const casesSeparator: [string, boolean][] = [

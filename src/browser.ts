@@ -42,6 +42,46 @@ export class AdventBrowser {
         this.page.navigate({ url: `https://adventofcode.com/${this.date.year}` });
         return await ready;
     }
+    
+
+    visitDay(): Promise<unknown> {
+        this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}` });
+        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
+    }
+
+    // REGION: AutoResponder
+    returnForPart2(): Promise<unknown> {
+        // https://adventofcode.com/2016/day/3#part2
+        this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}#part2` });
+        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
+    }
+
+    async returnToDay(): Promise<void> {
+        // Skip this part to avoid spamming
+           return await new Promise(resolve => setImmediate(resolve));
+            
+        //     // await new Promise(resolve => setTimeout(resolve, 5000));
+        //     // const { year, day } = this.date;
+        //     // // const returnToDay = `document.querySelector('article > p > a[href*="/${year}/day/${day}"]').click();`;
+        //     // const returnToDay = `document.querySelector('p > a[href*="/${year}/day/${day}"]').click();`;
+        //     // await this.runtime.evaluate({ expression: returnToDay });
+        }
+
+    async getResponseParagraph(): Promise<string | null> {
+        const puzzleResponse = 'document.querySelector("p").textContent;';
+        const p = await this.runtime.evaluate({ expression: puzzleResponse });
+        const { type, value } = p.result;
+        return type == 'string' ? value : null;
+    }
+
+    async submit(answer: string): Promise<void> {
+        const typeInput = `document.querySelector('input[name="answer"]').value = "${answer}";`;
+        const submit = `document.querySelector('input[type="submit"]').click();`;
+        await this.runtime.evaluate({ expression: typeInput });
+        await this.runtime.evaluate({ expression: submit });
+    }
+
+    // REGION END: AutoResponder
 
     async longPollDailyUnlock(): Promise<void> {
         const anchor = `document.querySelector('a[href="/${this.date.year}/day/${this.date.day}"]');`;
@@ -66,11 +106,6 @@ export class AdventBrowser {
     async IsSolved(puzzle: Puzzle): Promise<boolean> {
         if (puzzle.is(1)) return await this.part1IsSolved();
         return await this.part2IsSolved();
-    }
-
-    visitDay(): Promise<unknown> {
-        this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}` });
-        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
     }
 
     private async interceptXhr(params: XhrInterceptionArguments): Promise<boolean | undefined> {
