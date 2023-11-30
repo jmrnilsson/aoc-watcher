@@ -4,6 +4,7 @@ import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
 import { AdventBrowser } from './browser';
 import { AutoResponderConstructorArguments, Explanation } from './types';
+import { Puzzle } from './puzzle';
 
 
 enum Numbers {
@@ -90,7 +91,7 @@ export class AutoResponder {
     private readonly seen: Set<string> = new Set<string>();
     private max: number = Infinity
     private min: number = -Infinity;
-    private lastSubmissionAt: bigint  = hrtime.bigint() - (1_000_000_000n * 60n * 60n);
+    private lastSubmissionAt: bigint  = hrtime.bigint() - (1_000_000_000n * 60n * 60n);  // Change to union null
     private lastPleaseWaitSeconds: bigint = 0n;
 
     constructor(params: AutoResponderConstructorArguments, browser: AdventBrowser) {
@@ -141,7 +142,7 @@ export class AutoResponder {
     private async actBy(explanation: Explanation, puzzle: string, paragraph: string): Promise<boolean> {
         if (explanation === Explanation.Success) {
             logger.info(`***** Success with part ${this.params.puzzle.part} *****`);
-            await this.browser.returnForPart2();
+            await this.browser.visitDay(Puzzle.part2());
             return true;
         }
         if (explanation === Explanation.High) this.max = Math.min(Number(puzzle), this.max);

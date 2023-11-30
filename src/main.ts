@@ -19,7 +19,7 @@ export async function start(argv: string[]) {
 
     await browser.visitHome();
     await browser.longPollDailyUnlock();
-    await browser.visitDay();
+    await browser.visitDay(Puzzle.part1());
     await browser.fetchPuzzleInput();
 
     if (await browser.IsSolved(Puzzle.part2())) {
@@ -33,7 +33,7 @@ export async function start(argv: string[]) {
     else {
         const part1Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzle: Puzzle.part1() }, browser);
         await part1Responder.start();
-        await browser.visitDay();
+        await browser.visitDay(Puzzle.part2());
     }
     const part2Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzle: Puzzle.part2() }, browser);
     await part2Responder.start();

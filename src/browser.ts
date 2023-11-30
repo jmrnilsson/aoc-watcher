@@ -43,15 +43,11 @@ export class AdventBrowser {
         return await ready;
     }
 
-    visitDay(): Promise<unknown> {
-        this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}` });
-        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
-    }
-
     // REGION: AutoResponder
-    returnForPart2(): Promise<unknown> {
-        // https://adventofcode.com/2016/day/3#part2
-        this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}#part2` });
+    visitDay(part: Puzzle): Promise<unknown> {
+        const uriTrail = part.is(1) ? "" : "#part2";
+        const uri = `https://adventofcode.com/${this.date.year}/day/${this.date.day}${uriTrail}`;
+        this.page.navigate({ url:  uri});
         return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
     }
 
