@@ -1,27 +1,11 @@
-import moment, { Moment } from 'moment';
-import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api'
+import { hrtime } from 'node:process';
 import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
-import { PuzzlePart, YearDay } from './types';
-import AutoResponderNavigator from './auto-responder-navigator';
+import { AdventBrowser } from './browser';
+import { AutoResponderConstructorArguments, Explanation } from './types';
+import { Puzzle } from './puzzle';
 
-export type AutoResponderConstructorArguments = {
-    runtime: ProtocolProxyApi.RuntimeApi;
-    puzzlePart: PuzzlePart;
-    date: YearDay;
-    execPath: string;
-    module: string;
-    seen: number[];
-    previousFaultAt: moment.Moment | null;
-}
-
-type Explanation = "High" | "Low" | "Unknown" | "Success";
-
-type SubmissionExplanation = {
-    waitSeconds: number;
-    explanation: Explanation;
-}
 
 enum Numbers {
     One = 1,
@@ -43,148 +27,165 @@ enum Numbers {
     Seventeen = 17,
     Eighteen = 18,
     Nineteen = 19,
-    Twenty = 20
+    Twenty = 20,
+    Thirty = 30,
+    Fourty = 40,
+    Fifty = 50,
+    Sixty = 60,
+    Seventy = 70,
+    Eighty = 80,
+    Ninety = 90
+}
+
+export function explain(paragraph: string, answer: string): Explanation {
+    if (/not the right answer|[Yy]ou gave an answer too recently/.test(paragraph)) {
+        if (isNumeric(answer)) {
+            if (paragraph.includes("answer is too high")) {
+                return Explanation.High;
+            }
+            else if (paragraph.includes("answer is too low")) {
+                return Explanation.Low;
+            }
+        }
+
+    } else if (/(That's the right answer|You've finished every puzzle)/i.test(paragraph)) {
+        return Explanation.Success;
+    }
+    return Explanation.Unknown;
+}
+
+export function pleaseWaitSeconds(paragraph: string, defaultWaitSeconds: number): number {
+    {
+        const matches = /[Yy]ou have (?<minutes>\w+)m (?<seconds>\w+)s left to wait/.exec(paragraph);
+        const minutes = matches?.groups?.minutes;
+        const seconds = matches?.groups?.seconds;
+
+        if (minutes && seconds) return Number(minutes) * 60 + Number(seconds);
+    }
+
+    const matches = /[Pp]lease wait (?<amount>\w+) (?<unit>\w+) before trying again/.exec(paragraph);
+    const amount = matches?.groups?.amount;
+    const unit = matches?.groups?.unit;
+
+    if (unit && amount) {
+        let k: number = 60;
+        if (/second/.test(unit)) k = 1;
+        if (/hour/.test(unit)) k = 60 * 60;
+
+        let amountValue: null | number = null;
+        if (/\d+/.test(amount)) amountValue = Number(amount);
+        else {
+            const amountInvariant: string = amount.slice(0, 1).toUpperCase() + amount.slice(1).toLowerCase();
+            const amountNumber: Numbers = Numbers[amountInvariant as keyof typeof Numbers]
+            amountValue = amountNumber.valueOf()                    
+        }
+        return amountValue * k;
+    }
+    logger.error("Unknown unit. Amount: %s, Unit: %s", amount, unit);
+    return defaultWaitSeconds;
 }
 
 export class AutoResponder {
-    private readonly navigator: AutoResponderNavigator;
+    private readonly browser: AdventBrowser;
     private readonly params: AutoResponderConstructorArguments;
-    private readonly seen: Set<string>;
-    private max: number
-    private min: number;
-    private previousFaultAt: moment.Moment;
-    private waitSeconds: number = 0;
-    // private complete: boolean = false;
+    private readonly seen: Set<string> = new Set<string>();
+    private max: number = Infinity
+    private min: number = -Infinity;
+    private lastSubmissionAt: bigint  = hrtime.bigint() - (1_000_000_000n * 60n * 60n);  // Change to union null
+    private lastPleaseWaitSeconds: bigint = 0n;
 
-    constructor(params: AutoResponderConstructorArguments) {
-        this.navigator = new AutoResponderNavigator(params.runtime);
+    constructor(params: AutoResponderConstructorArguments, browser: AdventBrowser) {
+        this.browser = browser;
         this.params = params;
-        this.seen = new Set<string>();
-        this.max = Math.max(...params.seen, Infinity);
-        this.min = Math.min(...params.seen, -Infinity);
-        this.previousFaultAt = params.previousFaultAt ?? moment().utc().add(-1, 'hours');
+    }
+
+    private residualWaitSeconds(): bigint {
+        const waitedSeconds: bigint = (hrtime.bigint() - this.lastSubmissionAt) / 1_000_000_000n;
+        if (waitedSeconds < this.lastPleaseWaitSeconds){
+            return this.lastPleaseWaitSeconds - waitedSeconds;
+        }
+        return 0n;
     }
 
     private skipByTriage(answer: string): boolean {
-        if (this.seen.has(answer)) {
-            logger.info(`***** Triage: Already seen ${answer}! *****`);
-            return true;
-        }
+        const residualWaitSeconds: bigint = this.residualWaitSeconds();
+        const waitMsg: string = residualWaitSeconds === 0n ? "" : `, but WAIT for ${residualWaitSeconds} seconds.`;
+
         if (isNumeric(answer)) {
             const answer_ = Number(answer);
-            if (answer_ <= this.min) {
-                logger.info(`***** Triage: ${answer} is too low! *****`);
+
+            if (Math.abs(this.min) !== Infinity && answer_ <= this.min) {
+                logger.info(`***** Triage: ${answer} is too low! Min: ${this.min}${waitMsg} *****`);
                 return true
             }
-            if (answer_ >= this.max) {
-                logger.info(`***** Triage: ${answer} is too high! *****`);
+
+            if (Math.abs(this.min) !== Infinity && answer_ >= this.max) {
+                logger.info(`***** Triage: ${answer} is too high! Max: ${this.max}${waitMsg} *****`);
                 return true
             }
         }
+
+        if (this.seen.has(answer)) {
+            logger.info(`***** Triage: Already tried ${answer}${waitMsg}! *****`);
+            return true;
+        }
+
+        if (residualWaitSeconds){
+            logger.info(`***** Triage: OK ${answer}${waitMsg} *****`); 
+            return true;
+        }
+
+        logger.info(`***** Triage: OK, promoting ${answer}! *****`);
         return false;
     }
 
-    private pleaseWaitSeconds(paragraph: string, defaultWaitSeconds: number): number {
-        const matches = /Please wait (?<amount>\w+) (?<unit>\w+) before trying again/.exec(paragraph);
-        const amount = matches?.groups?.amount;
-        const unit = matches?.groups?.unit;
-
-        if (unit && amount) {
-            let k: number = 60;
-            if (/second/.test(unit)) k = 1;
-            if (/hour/.test(unit)) k = 60 * 60;
-
-            const amountInvariant: string = amount.slice(0, 1).toUpperCase() + amount.slice(1).toLowerCase();
-            const amountNumber: Numbers = Numbers[amountInvariant as keyof typeof Numbers]
-            const amountValue: number = amountNumber.valueOf()
-            return amountValue * k;
+    private async actBy(explanation: Explanation, puzzle: string, paragraph: string): Promise<boolean> {
+        if (explanation === Explanation.Success) {
+            logger.info(`***** Success with part ${this.params.puzzle.part} *****`);
+            await this.browser.visitDay(Puzzle.part2());
+            return true;
         }
-        logger.error("Unknown unit. Amount: %s, Unit: %s", amount, unit);
-        return defaultWaitSeconds;
+        if (explanation === Explanation.High) this.max = Math.min(Number(puzzle), this.max);
+        if (explanation === Explanation.Low) this.min = Math.max(Number(puzzle), this.min);
+        await this.browser.returnToDay();
+        this.lastPleaseWaitSeconds = BigInt(pleaseWaitSeconds(paragraph, 180));
+        return false;
     }
 
-    // Public for unit testing purposes.
-    public explain(paragraph: string, answer: string): SubmissionExplanation {
-        const defaultWaitSeconds: number = 120;
-        if (paragraph.includes("not the right answer")) {
-            this.seen.add(answer);
-            this.previousFaultAt = moment.utc();
-            const waitSeconds = this.pleaseWaitSeconds(paragraph, defaultWaitSeconds);
-
-            if (isNumeric(answer)) {
-                if (paragraph.includes("answer is too high")) {
-                    this.max = Math.max(Number(answer), this.max);
-                    return { explanation: "High", waitSeconds };
-                }
-                else if (paragraph.includes("answer is too low")) {
-                    this.min = Math.min(Number(answer), this.min);
-                    return { explanation: "Low", waitSeconds };
-                }
-            }
-        } else if (/(That's the right answer|You've finished every puzzle)/i.test(paragraph)) {
-            return { explanation: "Success", waitSeconds: 0 };
-        }
-        return { explanation: "Unknown", waitSeconds: defaultWaitSeconds };
-    }
-
-    private async trySubmit(maybeJson: any, output: string): Promise<boolean> {
-        const minSecondsToWait = 31;
+    private async submit(maybeJson: any, output: string): Promise<boolean> {
         const { ok, puzzle } = maybeJson;
         logger.info(`\n${output}`);
+
         if (ok !== true) return false;
 
-        const minUntil: Moment = this.previousFaultAt.add(minSecondsToWait, 'seconds');
-        const until: Moment = this.previousFaultAt.add(this.waitSeconds, 'seconds');
-        // const minWait = moment.utc().diff(_minWait, 'seconds', true);
-        // const toWait = moment.utc().diff(_toWait, 'seconds', true);
         if (this.skipByTriage(puzzle)) return false;
 
-        const minWaitMilliseconds: number = minUntil.diff(moment.utc());
-        const waitMilliseconds: number =  until.diff(moment.utc());
-        if (waitMilliseconds > 0 || minWaitMilliseconds > 0) {
-            const waitSeconds = Math.max(waitMilliseconds, minWaitMilliseconds) / 1000;
-            logger.info(`***** Will commit ${this.params.puzzlePart}: ${puzzle} in ${waitSeconds}s. *****`);
-            return false;
-        }
+        await this.browser.submit(puzzle);
+        const paragraph = await this.browser.getResponseParagraph();
+        this.lastSubmissionAt = hrtime.bigint();
 
-        await this.navigator.submit(puzzle);
-        const paragraph = await this.navigator.getResponseParagraph();
         if (!paragraph) return false;
-        const { waitSeconds, explanation } = this.explain(paragraph, puzzle);
-        this.waitSeconds = waitSeconds;
-        if (explanation === "Success") {
-            logger.info(`***** Success with part ${this.params.puzzlePart} *****`);
-            // this.complete = true;
-            return true;
-
-// '                if (this.params.puzzlePart === 1) {
-//                     this.navigator.returnToDay(this.params.date);
-//                 } else {
-//                     this.complete = true;
-//                     return;
-//                 }
-
-        // if (paragraph) {
-        //     const success = await this.navigator.tryProgressFrom(this.params.puzzlePart, paragraph);
-        //     if (success) return;
-        // }
-        }
-        return false;
+        this.seen.add(puzzle);
+        const explanation = explain(paragraph, puzzle);
+        return this.actBy(explanation, puzzle, paragraph);
     }
 
     async start() {
         let success: boolean = false;
-        const ts = moment.utc();
-        const submitTimeoutSeconds = 60 * 60;  // 1h
+        const ts: bigint = hrtime.bigint();
+        const submitTimeoutSeconds: bigint = 60n * 60n;  // 1h
         const sleepMilliseconds = 750;
-        while (moment.utc().diff(ts, 'seconds', true) < submitTimeoutSeconds && !success) {
+        while (!success) {
+            const duration: bigint = (hrtime.bigint() - ts) / 1_000_000_000n;
+            if (duration >= submitTimeoutSeconds) break;
+            
             await new Promise(resolve => setTimeout(resolve, sleepMilliseconds));
 
             try {
                 const standardOutput = await forkChildProcessEval(this.params);
                 const maybeJson = parseJsonFromStandardOutputOrNull(standardOutput);
                 if (maybeJson) {
-                    success = await this.trySubmit(maybeJson, standardOutput);
+                    success = await this.submit(maybeJson, standardOutput);
                     if (success) break;
                 }
             }

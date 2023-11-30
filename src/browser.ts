@@ -4,8 +4,9 @@ import { logger } from './utils/log';
 import { writeFile } from './utils/io';
 import { zfill } from './utils/format';
 import { ProtocolProxyApi } from 'devtools-protocol/types/protocol-proxy-api'
-import { PuzzlePart, YearDay } from './types';
+import { YearDay } from './types';
 import { longPoll } from './long-poll';
+import { Puzzle } from './puzzle';
 
 type XhrInterceptionArguments = {
     transactionStartedExpression: string;
@@ -31,54 +32,78 @@ export class AdventBrowser {
     }
 
     private get page() {
-        // NOTE: Return type can only be inferred here. ProtocolProxyApi.Page doesn't not implement loadEventFired and
-        // explicitly decorating with inherited type fails due to DefinatelyTypes issues.
+        // BEWARE: ProtocolProxyApi.Page doesn't not implement loadEventFired (later used). Moreover, explicitly
+        // decorating with inherited type fails due to flawed DefinatelyTyped issues.
         return this.client.Page;
     }
 
-    async visitHome() {
+    async visitHome(): Promise<unknown> {
         const ready = new Promise(resolve => { this.client.on('ready', resolve) });
         this.page.navigate({ url: `https://adventofcode.com/${this.date.year}` });
         return await ready;
     }
 
-    async longPollDailyUnlock() {
+    // REGION: AutoResponder
+    visitDay(part: Puzzle): Promise<unknown> {
+        const uriTrail = part.is(1) ? "" : "#part2";
+        const uri = `https://adventofcode.com/${this.date.year}/day/${this.date.day}${uriTrail}`;
+        this.page.navigate({ url:  uri});
+        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
+    }
+
+    async returnToDay(): Promise<void> {
+        // Skip this part to avoid spamming
+           return await new Promise(resolve => setImmediate(resolve));
+            
+        //     // await new Promise(resolve => setTimeout(resolve, 5000));
+        //     // const { year, day } = this.date;
+        //     // // const returnToDay = `document.querySelector('article > p > a[href*="/${year}/day/${day}"]').click();`;
+        //     // const returnToDay = `document.querySelector('p > a[href*="/${year}/day/${day}"]').click();`;
+        //     // await this.runtime.evaluate({ expression: returnToDay });
+        }
+
+    async getResponseParagraph(): Promise<string | null> {
+        const puzzleResponse = 'document.querySelector("p").textContent;';
+        const p = await this.runtime.evaluate({ expression: puzzleResponse });
+        const { type, value } = p.result;
+        return type == 'string' ? value : null;
+    }
+
+    async submit(answer: string): Promise<void> {
+        const typeInput = `document.querySelector('input[name="answer"]').value = "${answer}";`;
+        const submit = `document.querySelector('input[type="submit"]').click();`;
+        await this.runtime.evaluate({ expression: typeInput });
+        await this.runtime.evaluate({ expression: submit });
+    }
+
+    // REGION END: AutoResponder
+
+    async longPollDailyUnlock(): Promise<void> {
         const anchor = `document.querySelector('a[href="/${this.date.year}/day/${this.date.day}"]');`;
         const asyncFunc = () => this.runtime.evaluate({ expression: anchor });
         const breakPredicate = (anchor: any) => anchor?.result?.className == "HTMLAnchorElement"
         await longPoll({ fn: asyncFunc, breakPredicate, sleep: 750, timeoutSeconds: 60 * 10, log: true });
     }
 
-    private async part2IsSolved() {
+    private async part2IsSolved(): Promise<boolean> {
         const txtDaySuccess = 'document.querySelector(\'p[class="day-success"]\').textContent';
         const txt = await this.runtime.evaluate({ expression: txtDaySuccess });
         const successMessage = "Both parts of this puzzle are complete";
         return Boolean(txt?.result?.type == "string" && txt?.result?.value.includes(successMessage));
     }
 
-    private async part1IsSolved() {
+    private async part1IsSolved(): Promise<boolean> {
         const h2Part2 = 'document.querySelector(\'h2[id="part2"]\')';
         const h2 = await this.runtime.evaluate({ expression: h2Part2 });
         return Boolean(h2?.result?.className == "HTMLHeadingElement");
     }
 
-    async IsSolved(partNumber: PuzzlePart) {
-        if (partNumber === 1) return await this.part1IsSolved();
+    async IsSolved(puzzle: Puzzle): Promise<boolean> {
+        if (puzzle.is(1)) return await this.part1IsSolved();
         return await this.part2IsSolved();
     }
 
-    visitDay() {
-        this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}` });
-        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
-    }
-
-    // async returnToDay(date: YearDay): Promise<void> {
-    //     const { year, day } = date;
-    //     const returnToDay = `document.querySelector('a[href="/${year}/day/${day}]').click();`;
-    //     await this.runtime.evaluate({ expression: returnToDay });
-    // }
-
-    private async interceptXhr(params: XhrInterceptionArguments) {
+    private async interceptXhr(params: XhrInterceptionArguments): Promise<boolean | undefined> {
         const timestamp = await this.runtime.evaluate({ expression: params.transactionStartedExpression });
         if (timestamp?.result?.value && timestamp?.result?.type == 'string') {
             const { value } = timestamp.result;
@@ -98,7 +123,7 @@ export class AdventBrowser {
         else new Error(`Unexpected mutation of XHR response: ${xhr}`);
     }
 
-    async fetchPuzzleInput() {
+    async fetchPuzzleInput(): Promise<void> {
         const responseTextExpression = `(function () {
         var el = document.getElementById("ab0ed957-70d7-4ea4-8dcb-5488ea950d1f");
         if (el) return el.payload;

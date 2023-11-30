@@ -5,49 +5,9 @@ import { spawn } from 'child_process';
 import Mustache from 'mustache';
 import { zfill } from './format';
 import { logger } from './log';
-import { InteropPart, PuzzlePart, YearDay } from '../types';
-import moment from 'moment';
+import { ForkChildProcessForSolveEvalArguments } from '../types';
 
-
-const _CONFIG_PATH: string = ".aoc-watcher-storage.json";
-
-export type ForkChildProcessForSolveEvalArguments = {
-    date: YearDay;
-    puzzlePart: PuzzlePart;
-    execPath: string;
-    module: string;
-}
-
-type AdventHistoryFile = Record<string, {
-    seen: number[];
-    previousFaultAtTimestamp: number
-}>;
-
-export type AdventHistory = Record<string, {
-    seen: number[];
-    previousFaultAt: moment.Moment
-}>;
-
-
-export async function readHistory(): Promise<AdventHistory> {
-    if (!fs.existsSync(_CONFIG_PATH)) return {};
-    const data: AdventHistoryFile = JSON.parse((await fsp.readFile(_CONFIG_PATH, 'utf-8')).toString());
-    const adventHistory: AdventHistory = {};
-    for (const [yearDay, value] of Object.entries(data)) {
-        const {previousFaultAtTimestamp, ...rest} = value as any;
-        data[yearDay] = { ...rest, previousFaultAt: moment(previousFaultAtTimestamp) }
-    }
-    return adventHistory;
-}
-
-export async function writeHistory(adventHistory: AdventHistory): Promise<void> {
-    const data: AdventHistoryFile = {};
-    for (const [yearDay, value] of Object.entries(adventHistory)) {
-        const {previousFaultAt, ...rest} = value;
-        data[yearDay] = { ...rest, previousFaultAtTimestamp: previousFaultAt.unix() }
-    }
-    return await fsp.writeFile(_CONFIG_PATH, JSON.stringify(data, null, 2), {mode: 'utf-8'});
-}
+export const _CONFIG_PATH: string = ".aoc-watcher-storage.json";
 
 export async function writeFile(folder: string, fileName: string, content: string): Promise<void> {
     if (!fs.existsSync(folder)) {
@@ -65,8 +25,13 @@ export async function writeFile(folder: string, fileName: string, content: strin
 }
 
 export function forkChildProcessForSolveEval(params: ForkChildProcessForSolveEvalArguments): Promise<string> {
-    const flag: InteropPart = params.puzzlePart === 1 ? '-json1' : '-json2';
-    const args: string[] = [Mustache.render(params.module, { year: params.date.year, day: zfill(params.date.day, 2) }), flag];
+    const args: string[] = [
+        Mustache.render(params.module, {
+            year: params.date.year,
+            day: zfill(params.date.day, 2)
+        }),
+        params.puzzle.jsonSuffix
+    ];
 
     return new Promise((resolve, reject) => {
         const cp = spawn(params.execPath, args);
