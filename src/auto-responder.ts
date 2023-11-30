@@ -36,6 +36,54 @@ enum Numbers {
     Ninety = 90
 }
 
+export function explain(paragraph: string, answer: string): Explanation {
+    if (/not the right answer|[Yy]ou gave an answer too recently/.test(paragraph)) {
+        if (isNumeric(answer)) {
+            if (paragraph.includes("answer is too high")) {
+                return Explanation.High;
+            }
+            else if (paragraph.includes("answer is too low")) {
+                return Explanation.Low;
+            }
+        }
+
+    } else if (/(That's the right answer|You've finished every puzzle)/i.test(paragraph)) {
+        return Explanation.Success;
+    }
+    return Explanation.Unknown;
+}
+
+export function pleaseWaitSeconds(paragraph: string, defaultWaitSeconds: number): number {
+    {
+        const matches = /[Yy]ou have (?<minutes>\w+)m (?<seconds>\w+)s left to wait/.exec(paragraph);
+        const minutes = matches?.groups?.minutes;
+        const seconds = matches?.groups?.seconds;
+
+        if (minutes && seconds) return Number(minutes) * 60 + Number(seconds);
+    }
+
+    const matches = /[Pp]lease wait (?<amount>\w+) (?<unit>\w+) before trying again/.exec(paragraph);
+    const amount = matches?.groups?.amount;
+    const unit = matches?.groups?.unit;
+
+    if (unit && amount) {
+        let k: number = 60;
+        if (/second/.test(unit)) k = 1;
+        if (/hour/.test(unit)) k = 60 * 60;
+
+        let amountValue: null | number = null;
+        if (/\d+/.test(amount)) amountValue = Number(amount);
+        else {
+            const amountInvariant: string = amount.slice(0, 1).toUpperCase() + amount.slice(1).toLowerCase();
+            const amountNumber: Numbers = Numbers[amountInvariant as keyof typeof Numbers]
+            amountValue = amountNumber.valueOf()                    
+        }
+        return amountValue * k;
+    }
+    logger.error("Unknown unit. Amount: %s, Unit: %s", amount, unit);
+    return defaultWaitSeconds;
+}
+
 export class AutoResponder {
     private readonly browser: AutoResponderBrowser;
     private readonly params: AutoResponderConstructorArguments;
@@ -50,80 +98,44 @@ export class AutoResponder {
         this.params = params;
     }
 
+    private residualWaitSeconds(): bigint {
+        const waitedSeconds: bigint = (hrtime.bigint() - this.lastSubmissionAt) / 1_000_000_000n;
+        if (waitedSeconds < this.lastPleaseWaitSeconds){
+            return this.lastPleaseWaitSeconds - waitedSeconds;
+        }
+        return 0n;
+    }
+
     private skipByTriage(answer: string): boolean {
+        const residualWaitSeconds: bigint = this.residualWaitSeconds();
+        const waitMsg: string = residualWaitSeconds === 0n ? "" : `, but WAIT for ${residualWaitSeconds} seconds.`;
+
         if (isNumeric(answer)) {
             const answer_ = Number(answer);
+
             if (answer_ <= this.min) {
-                logger.info(`***** Triage: ${answer} is too low! Min: ${this.min} *****`);
+                logger.info(`***** Triage: ${answer} is too low! Min: ${this.min}${waitMsg} *****`);
                 return true
             }
+
             if (answer_ >= this.max) {
-                logger.info(`***** Triage: ${answer} is too high! Max: ${this.max} *****`);
+                logger.info(`***** Triage: ${answer} is too high! Max: ${this.max}${waitMsg} *****`);
                 return true
             }
         }
+
         if (this.seen.has(answer)) {
-            logger.info(`***** Triage: Already tried ${answer}! *****`);
+            logger.info(`***** Triage: Already tried ${answer}${waitMsg}! *****`);
             return true;
         }
 
-        const waitedSeconds: bigint = (hrtime.bigint() - this.lastSubmissionAt) / 1_000_000_000n;
-        if (waitedSeconds > this.lastPleaseWaitSeconds){
-            const secondsLeft: bigint = waitedSeconds - this.lastPleaseWaitSeconds;
-            logger.info(`***** Triage: OK, but WAIT ${answer} for ${secondsLeft} seconds. *****`);
-            return false;
+        if (residualWaitSeconds){
+            logger.info(`***** Triage: OK ${answer}${waitMsg} *****`); 
+            return true;
         }
+
         logger.info(`***** Triage: OK, promoting ${answer}! *****`);
         return false;
-    }
-
-    private pleaseWaitSeconds(paragraph: string, defaultWaitSeconds: number): number {
-        {
-            const matches = /[Yy]ou have (?<minutes>\w+)m (?<seconds>\w+)s left to wait/.exec(paragraph);
-            const minutes = matches?.groups?.minutes;
-            const seconds = matches?.groups?.seconds;
-
-            if (minutes && seconds) return Number(minutes) * 60 + Number(seconds);
-        }
-
-        const matches = /[Pp]lease wait (?<amount>\w+) (?<unit>\w+) before trying again/.exec(paragraph);
-        const amount = matches?.groups?.amount;
-        const unit = matches?.groups?.unit;
-
-        if (unit && amount) {
-            let k: number = 60;
-            if (/second/.test(unit)) k = 1;
-            if (/hour/.test(unit)) k = 60 * 60;
-
-            let amountValue: null | number = null;
-            if (/\d+/.test(amount)) amountValue = Number(amount);
-            else {
-                const amountInvariant: string = amount.slice(0, 1).toUpperCase() + amount.slice(1).toLowerCase();
-                const amountNumber: Numbers = Numbers[amountInvariant as keyof typeof Numbers]
-                amountValue = amountNumber.valueOf()                    
-            }
-            return amountValue * k;
-        }
-        logger.error("Unknown unit. Amount: %s, Unit: %s", amount, unit);
-        return defaultWaitSeconds;
-    }
-
-    // Public for unit testing purposes.
-    public explain(paragraph: string, answer: string): Explanation {
-        if (/not the right answer|[Yy]ou gave an answer too recently/.test(paragraph)) {
-            if (isNumeric(answer)) {
-                if (paragraph.includes("answer is too high")) {
-                    return Explanation.High;
-                }
-                else if (paragraph.includes("answer is too low")) {
-                    return Explanation.Low;
-                }
-            }
-
-        } else if (/(That's the right answer|You've finished every puzzle)/i.test(paragraph)) {
-            return Explanation.Success;
-        }
-        return Explanation.Unknown;
     }
 
     private async submit(maybeJson: any, output: string): Promise<boolean> {
@@ -140,7 +152,7 @@ export class AutoResponder {
 
         if (!paragraph) return false;
         this.seen.add(puzzle);
-        const explanation = this.explain(paragraph, puzzle);
+        const explanation = explain(paragraph, puzzle);
 
         switch (explanation) {
             case Explanation.Success:
@@ -151,7 +163,7 @@ export class AutoResponder {
             case Explanation.Low: this.min = Math.min(Number(puzzle), this.min);
             case Explanation.Unknown:
                 await this.browser.returnToDay({noop: true});
-                this.lastPleaseWaitSeconds = BigInt(this.pleaseWaitSeconds(paragraph, 180));
+                this.lastPleaseWaitSeconds = BigInt(pleaseWaitSeconds(paragraph, 180));
                 break;
             default:
                 throw new AdventError(`Enumeration of explanation: ${explanation} not possible!`);
