@@ -3,7 +3,7 @@ import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
 import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
 import { AdventBrowser } from './browser';
-import { AdventError, AutoResponderConstructorArguments, Explanation } from './types';
+import { AutoResponderConstructorArguments, Explanation } from './types';
 
 
 enum Numbers {

@@ -42,7 +42,6 @@ export class AdventBrowser {
         this.page.navigate({ url: `https://adventofcode.com/${this.date.year}` });
         return await ready;
     }
-    
 
     visitDay(): Promise<unknown> {
         this.page.navigate({ url: `https://adventofcode.com/${this.date.year}/day/${this.date.day}` });
