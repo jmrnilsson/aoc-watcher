@@ -2,8 +2,7 @@ import { describe, expect, test} from '@jest/globals'
 import { AutoResponder } from './auto-responder';
 import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
 import { Puzzle } from './puzzle';
-import { AutoResponderConstructorArguments } from './types';
-import AdventHistoryFile from './utils/advent-history-file';
+import { AutoResponderConstructorArguments, Explanation } from './types';
 
 describe("AutoResponder", () => {
   const ctorArgs: AutoResponderConstructorArguments = {
@@ -11,8 +10,7 @@ describe("AutoResponder", () => {
     puzzle: Puzzle.part1(),
     date: { year: 2018, day: 5 },
     execPath: "",
-    module: "",
-    fileAccess: new AdventHistoryFile()
+    module: ""
   };
 
   // That's not the right answer; your answer is too high.  If you're stuck, make sure you're using the full input data; there are also some general tips on the <a href="/2018/about">about page</a>, or you can ask for hints on the <a href="https://www.reddit.com/r/adventofcode/" target="_blank">subreddit</a>.  Please wait one minute before trying again. <a href="/2018/day/22">[Return to Day 22]</a>
@@ -25,8 +23,8 @@ describe("AutoResponder", () => {
       const responder = new AutoResponder(ctorArgs);
       const actual = responder.explain(p, "4321");
       
-      expect(actual.explanation).toBe("High");
-      expect(actual.waitSeconds).toBe(60);
+      expect(actual).toBe(Explanation.High);
+      // expect(actual.waitSeconds).toBe(60);
     });
 
     test("Low and two minutes", function () {
@@ -35,8 +33,8 @@ describe("AutoResponder", () => {
       const responder = new AutoResponder(ctorArgs);
       const actual = responder.explain(p, "4321");
       
-      expect(actual.explanation).toBe("Low");
-      expect(actual.waitSeconds).toBe(120);
+      expect(actual).toBe(Explanation.Low);
+      // expect(actual.waitSeconds).toBe(120);
     });
 
     test("Unknown and 5 minutes", function () {
@@ -46,8 +44,8 @@ describe("AutoResponder", () => {
       const responder = new AutoResponder(ctorArgs);
       const actual = responder.explain(p, "4321");
       
-      expect(actual.explanation).toBe("Unknown");
-      expect(actual.waitSeconds).toBe(5 * 60);
+      expect(actual).toBe(Explanation.Unknown);
+      // expect(actual.waitSeconds).toBe(5 * 60);
     });
 
     test("Too recent 1m 20s", function () {
@@ -56,8 +54,8 @@ describe("AutoResponder", () => {
       const responder = new AutoResponder(ctorArgs);
       const actual = responder.explain(p, "1234");
       
-      expect(actual.explanation).toBe("Unknown");
-      expect(actual.waitSeconds).toBe(80);
+      expect(actual).toBe(Explanation.Unknown);
+      // expect(actual.waitSeconds).toBe(80);
     });
 
     test("10 minutes", function () {
@@ -67,8 +65,8 @@ describe("AutoResponder", () => {
       const responder = new AutoResponder(ctorArgs);
       const actual = responder.explain(p, "1122");
       
-      expect(actual.explanation).toBe("Unknown");
-      expect(actual.waitSeconds).toBe(10 * 60);
+      expect(actual).toBe(Explanation.Unknown);
+      // expect(actual.waitSeconds).toBe(10 * 60);
     });
 
     test("Unknown and 3 mins", function () {
@@ -77,8 +75,8 @@ describe("AutoResponder", () => {
       const responder = new AutoResponder(ctorArgs);
       const actual = responder.explain(p, "4321");
       
-      expect(actual.explanation).toBe("Unknown");
-      expect(actual.waitSeconds).toBe(180);
+      expect(actual).toBe(Explanation.Unknown);
+      // expect(actual.waitSeconds).toBe(180);
     });
 
   });

@@ -5,6 +5,8 @@ module.exports = {
   root: true,
   ignorePatterns: ["out/**", "**.js"],
   rules: {
-    "@typescript-eslint/no-explicit-any": "off"
+    "@typescript-eslint/no-explicit-any": "off",
+    "no-fallthrough": "off",
+    "no-constant-condition": "off"
   }
 };

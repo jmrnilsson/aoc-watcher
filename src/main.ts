@@ -6,7 +6,6 @@ import { getEnvs, parseArgvToDate } from './utils/format';
 import { AdventBrowser } from './browser';
 import { AutoResponder } from './auto-responder';
 import ProtocolProxyApi from 'devtools-protocol/types/protocol-proxy-api';
-import AdventHistoryFile from './utils/advent-history-file';
 import { Puzzle } from './puzzle';
 
 
@@ -17,10 +16,7 @@ export async function start(argv: string[]) {
     // @ts-expect-error: can't cast as there some mismatch between the ProxyApi and DefinatelyTyped.
     const runtime = client.Runtime as ProtocolProxyApi.RuntimeApi;
     const vars = getEnvs();
-    const fileAccess = new AdventHistoryFile();
-    await fileAccess.initialize();
-    await fileAccess.save(null);
-    const autoResponderCtorArguments = { date, execPath: vars.execPath, module: vars.module, runtime, fileAccess };
+    const autoResponderCtorArguments = { date, execPath: vars.execPath, module: vars.module, runtime };
 
     const browser = new AdventBrowser(client, date, vars.puzzleFolder, vars.puzzleFile);
     logger.info("Browser online.");
@@ -34,6 +30,7 @@ export async function start(argv: string[]) {
         logger.info("Part 2 already completed.");
         process.exit();
     }
+
     if (await browser.IsSolved(Puzzle.part1())) {
         logger.info("Part 1 already completed. Skipping part 1.");
     }

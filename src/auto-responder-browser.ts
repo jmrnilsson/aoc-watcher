@@ -3,7 +3,7 @@ import { YearDay } from './types';
 // import { PuzzlePart, YearDay } from './types';
 
 
-export default class AutoResponderNavigator {
+export default class AutoResponderBrowser {
     private readonly runtime: ProtocolProxyApi.RuntimeApi;
     private readonly date: YearDay;
 
@@ -19,11 +19,9 @@ export default class AutoResponderNavigator {
         await this.runtime.evaluate({ expression: submit });
     }
 
-    // <a href="/2016/day/2">[Return to Day 2]</a>
-    // <a href="/2016/day/2">[Return to Day 2]</a>
-    async returnToDay(): Promise<void> {
+    async returnToDay(options: {noop: boolean}): Promise<void> {
         // Skip this part to avoid spamming
-        // await new Promise(resolve => setImmediate(resolve));
+        if (options.noop) return await new Promise(resolve => setImmediate(resolve));
         
         await new Promise(resolve => setTimeout(resolve, 5000));
         const { year, day } = this.date;
