@@ -44,11 +44,12 @@ export class AdventBrowser {
     }
 
     // REGION: AutoResponder
-    visitDay(part: Puzzle): Promise<unknown> {
+    async visitDay(part: Puzzle): Promise<unknown> {
+        const ready = new Promise(resolve => { this.client.on('ready', resolve) });
         const uriTrail = part.is(1) ? "" : "#part2";
         const uri = `https://adventofcode.com/${this.date.year}/day/${this.date.day}${uriTrail}`;
         this.page.navigate({ url:  uri});
-        return new Promise((resolve) => this.client.Page.loadEventFired(resolve));
+        return await ready;
     }
 
     async returnToDay(): Promise<void> {

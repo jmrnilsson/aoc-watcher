@@ -147,7 +147,7 @@ export class AutoResponder {
         }
         if (explanation === Explanation.High) this.max = Math.min(Number(puzzle), this.max);
         if (explanation === Explanation.Low) this.min = Math.max(Number(puzzle), this.min);
-        await this.browser.returnToDay();
+        // await this.browser.returnToDay();
         this.lastPleaseWaitSeconds = BigInt(pleaseWaitSeconds(paragraph, 180));
         return false;
     }
