@@ -83,7 +83,7 @@ export class AdventBrowser {
         const anchor = `document.querySelector('a[href="/${this.date.year}/day/${this.date.day}"]');`;
         const asyncFunc = () => this.runtime.evaluate({ expression: anchor });
         const breakPredicate = (anchor: any) => anchor?.result?.className == "HTMLAnchorElement"
-        await longPoll({ fn: asyncFunc, breakPredicate, sleep: 750, timeoutSeconds: 60 * 10, log: true });
+        await longPoll({ fn: asyncFunc, breakPredicate, sleep: 700, timeoutSeconds: 60 * 10, log: true });
     }
 
     private async part2IsSolved(): Promise<boolean> {
