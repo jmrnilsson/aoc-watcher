@@ -38,15 +38,16 @@ export function getEnvs(): AdventVariables {
 export function matchStandardOutputOrNull(output: string): StdOutEvalCapture {
   const reTest = new RegExp(/^(.*)\(OK\)/gm);
 
-  if (reTest.test(output)) {
+  if (!reTest.test(output)) {
     return { ok: false, puzzle: null };
   }
 
   let puzzle: string | null = null;
   const rePuzzle = new RegExp(/^(.*)\(N?\/?OK\)/gm);
 
-  for (const match of rePuzzle.exec(output) ?? []) {
-    puzzle = match;
+  
+  for (const match of output.matchAll(rePuzzle) ?? []) {
+    puzzle = match[0].replace(rePuzzle, '$1').trim();
   }
 
   if (puzzle === null) {
