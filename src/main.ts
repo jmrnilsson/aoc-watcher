@@ -31,11 +31,11 @@ export async function start(argv: string[]) {
         logger.info("Part 1 already completed. Skipping part 1.");
     }
     else {
-        const part1Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzle: Puzzle.part1() }, browser);
+        const part1Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzle: Puzzle.part1(), part: 1 }, browser);
         await part1Responder.start();
         await browser.visitDay(Puzzle.part2());
     }
-    const part2Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzle: Puzzle.part2() }, browser);
+    const part2Responder = new AutoResponder({ ...autoResponderCtorArguments, puzzle: Puzzle.part2(), part: 2 }, browser);
     await part2Responder.start();
 
     logger.info(`Done! Good job dudes and dudettes! You made Santa proud today!`);

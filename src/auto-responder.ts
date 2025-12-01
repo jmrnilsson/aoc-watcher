@@ -1,9 +1,9 @@
 import { hrtime } from 'node:process';
 import { logger } from './utils/log';
 import { forkChildProcessForSolveEval as forkChildProcessEval } from './utils/io';
-import { parseJsonFromStandardOutputOrNull, isNumeric } from './utils/format';
+import { matchStandardOutputOrNull, isNumeric } from './utils/format';
 import { AdventBrowser } from './browser';
-import { AutoResponderConstructorArguments, Explanation } from './types';
+import { AutoResponderConstructorArguments, StdOutEvalCapture, Explanation } from './types';
 import { Puzzle } from './puzzle';
 
 
@@ -152,8 +152,8 @@ export class AutoResponder {
         return false;
     }
 
-    private async submit(maybeJson: any, output: string): Promise<boolean> {
-        const { ok, puzzle } = maybeJson;
+    private async submit(stdOutEvalCapture: StdOutEvalCapture, output: string): Promise<boolean> {
+        const { ok, puzzle } = stdOutEvalCapture;
         logger.info(`\n${output}`);
 
         if (ok !== true) return false;
@@ -183,7 +183,7 @@ export class AutoResponder {
 
             try {
                 const standardOutput = await forkChildProcessEval(this.params);
-                const maybeJson = parseJsonFromStandardOutputOrNull(standardOutput);
+                const maybeJson = matchStandardOutputOrNull(standardOutput);
                 if (maybeJson) {
                     success = await this.submit(maybeJson, standardOutput);
                     if (success) break;

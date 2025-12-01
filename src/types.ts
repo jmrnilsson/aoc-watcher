@@ -8,13 +8,6 @@ export type AdventVariables = {
   puzzleFolder: string;
 }
 
-export type ForkChildProcessForSolveEvalArguments = {
-  date: YearDay;
-  puzzle: Puzzle;
-  execPath: string;
-  module: string;
-}
-
 // export type Explanation = "High" | "Low" | "Unknown" | "Success";
 export enum Explanation {
   High,
@@ -47,4 +40,13 @@ export type AutoResponderConstructorArguments = {
   date: YearDay;
   execPath: string;
   module: string;
+  part: number;
+}
+
+export type StdOutEvalCapture = {
+  ok: true;
+  puzzle: string;
+} | {
+  ok: false;
+  puzzle: null;
 }

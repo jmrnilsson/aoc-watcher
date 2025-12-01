@@ -49,7 +49,7 @@ or in an `.env`:
 ```txt
 AOCW_PUZZLE_FILE=puzzle.txt
 AOCW_PUZZLE_FOLDER=M:\\development\\aoc\\year_{{year}}\\day_{{day}}\\
-AOCW_MODULE=M:\\development\\aoc\\year_{{year}}\\day_{{day}}\\solve.py
+AOCW_MODULE=M:\\development\\aoc\\year_{{year}}\\day_{{day}}\\solve_{{part}}.py
 AOCW_EXEC=M:\\development\\aoc\\.venv\\Scripts\\python.exe
 ```
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import moment from 'moment';
-import { AdventError, AdventVariables, YearDay } from '../types';
+import { AdventError, AdventVariables, StdOutEvalCapture, YearDay } from '../types';
 
 export function zfill(digits: number, n: number) {
   if (n > 7) throw new AdventError(`Larger zero fills not supported (n=${n})`);
@@ -35,10 +35,25 @@ export function getEnvs(): AdventVariables {
   return vars;
 }
 
-export function parseJsonFromStandardOutputOrNull(output: string) {
-  const re = new RegExp(/{[\w- "':,]+(uzzle)[\w- "':,]+}/g);
-  const match = re.exec(output);
-  return match ? JSON.parse(match[0]) : null;
+export function matchStandardOutputOrNull(output: string): StdOutEvalCapture {
+  const reTest = new RegExp(/^(.*)\(OK\)/gm);
+
+  if (reTest.test(output)) {
+    return { ok: false, puzzle: null };
+  }
+
+  let puzzle: string | null = null;
+  const rePuzzle = new RegExp(/^(.*)\(N?\/?OK\)/gm);
+
+  for (const match of rePuzzle.exec(output) ?? []) {
+    puzzle = match;
+  }
+
+  if (puzzle === null) {
+    return { ok: false, puzzle: null };
+  }
+
+  return { ok: true, puzzle: puzzle}
 }
 
 export function isNumeric(value: string, allowSeparator: boolean = false) {

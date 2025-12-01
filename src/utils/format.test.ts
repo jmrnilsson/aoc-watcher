@@ -1,5 +1,5 @@
 import { describe, expect, test} from '@jest/globals'
-import { parseArgvToDate as parse, parseJsonFromStandardOutputOrNull as toJson, isNumeric } from './format';
+import { parseArgvToDate as parse, matchStandardOutputOrNull as toJson, isNumeric } from './format';
 
 describe("Year day argv parser", function () {
   test("can parse iso date", function () {

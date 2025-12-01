@@ -5,7 +5,7 @@ import { spawn } from 'child_process';
 import Mustache from 'mustache';
 import { zfill } from './format';
 import { logger } from './log';
-import { ForkChildProcessForSolveEvalArguments } from '../types';
+import { AutoResponderConstructorArguments } from '../types';
 
 export const _CONFIG_PATH: string = ".aoc-watcher-storage.json";
 
@@ -24,11 +24,13 @@ export async function writeFile(folder: string, fileName: string, content: strin
     await fsp.writeFile(fullName, content)
 }
 
-export function forkChildProcessForSolveEval(params: ForkChildProcessForSolveEvalArguments): Promise<string> {
+
+export function forkChildProcessForSolveEval(params: AutoResponderConstructorArguments): Promise<string> {
     const args: string[] = [
         Mustache.render(params.module, {
             year: params.date.year,
-            day: zfill(params.date.day, 2)
+            day: zfill(params.date.day, 2),
+            params: params.part
         }),
         params.puzzle.jsonSuffix
     ];
