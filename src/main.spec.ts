@@ -17,7 +17,7 @@ describe.skip("Main.start", function () {
     process.env = {
       "AOCW_PUZZLE_FILE": "puzzle.txt",
       "AOCW_PUZZLE_FOLDER": "C:\\sources\\aoc\\year_{{year}}\\day_{{day}}\\",
-      "AOCW_MODULE": "C:\\sources\\aoc\\year_{{year}}\\day_{{day}}\\solve.py",
+      "AOCW_MODULE": "C:\\sources\\aoc\\year_{{year}}\\day_{{day}}\\solve_{{part}}.py",
       "AOCW_EXEC": "C:\\sources\\aoc\\.venv\\Scripts\\python.exe"
     };
   });

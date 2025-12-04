@@ -35,6 +35,7 @@ export type LongPollArguments = {
   log: boolean;
 }
 
+// TODO: Expand paths and parts later on
 export type AutoResponderConstructorArguments = {
   puzzle: Puzzle;
   date: YearDay;

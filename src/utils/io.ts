@@ -30,7 +30,7 @@ export function forkChildProcessForSolveEval(params: AutoResponderConstructorArg
         Mustache.render(params.module, {
             year: params.date.year,
             day: zfill(params.date.day, 2),
-            params: params.part
+            part: params.part
         }),
         params.puzzle.jsonSuffix
     ];
